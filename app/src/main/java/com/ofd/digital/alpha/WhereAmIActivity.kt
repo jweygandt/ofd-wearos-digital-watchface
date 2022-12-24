@@ -67,7 +67,7 @@ class WhereAmIActivity : FragmentActivity() {
 
             if (location is ResolvedLocation) {
                 textView.text = "You are at: " + location.getAddressDescription() + ":" +
-                    location.getTimeAgo()
+                    location.timeAgo
             } else {
                 textView.setText(R.string.location_error)
             }

@@ -15,87 +15,90 @@
  */
 package com.ofd.complications
 
-import android.content.ComponentName
-import android.content.Context
+import android.graphics.drawable.Icon
 import android.util.Log
 import androidx.wear.watchface.complications.data.*
-import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
+import com.ofd.digital.alpha.R
 import com.ofd.digital.alpha.location.WatchLocationService
 import com.ofd.sunrisesunset.SunriseSunsetCalculator
 import com.ofd.sunrisesunset.dto.SSLocation
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
-
-class LocationTest : SuspendingComplicationDataSourceService() {
+class SunriseSunset : SuspendingComplicationDataSourceService() {
 
 
     companion object {
-        private const val TAG = "CalendarService"
-
-        var uctr = AtomicInteger(0)
-
-
+        private const val TAG = "SunriseSunset"
+        val uctr = AtomicInteger(0)
+        val sdf = SimpleDateFormat("H:mm")
     }
 
 
     override fun onComplicationActivated(
-        complicationInstanceId: Int,
-        type: ComplicationType
+        complicationInstanceId: Int, type: ComplicationType
     ) {
         Log.d(TAG, "onComplicationActivated(): $complicationInstanceId")
-
-
     }
 
     override fun getPreviewData(type: ComplicationType): ComplicationData {
         return LongTextComplicationData.Builder(
-            text = PlainComplicationText.Builder(text = "Here is line one\nline 2\nline 3 and one that is long\nline 4")
+            text = PlainComplicationText.Builder(text = "Sunrise")
                 .build(),
-            contentDescription = PlainComplicationText.Builder(text = "Calendar.")
-                .build()
-        )
-            .setTapAction(null)
-            .build()
+            contentDescription = PlainComplicationText.Builder(text = "Calendar.").build()
+        ).setTapAction(null).build()
     }
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         Log.d(TAG, "onComplicationRequest() id: ${request.complicationInstanceId}")
 
         val wl = WatchLocationService.getLocation()
-        val ssc = SunriseSunsetCalculator(
-            SSLocation(
-                wl.latitude.toString(),
-                wl.longitude.toString()
-            ), TimeZone.getDefault()
-        )
-        val sunrise = ssc.getCivilSunriseForDate(Calendar.getInstance())
-        val sunset = ssc.getCivilSunsetForDate(Calendar.getInstance())
-        val msg = wl.getAddressDescription() + "\n" +
-            TimeZone.getDefault().id + "\n" + //loc.getTimeAgo() + "\n" +
-            wl.callcnt.toString() + ":" + wl.successcnt.toString() + " " +
-            sunrise + " " + sunset + " " + TimeZone.getDefault().id
-
+        var time = "--:--"
+        var image : MonochromaticImage? = null
+        if (wl.valid) {
+            val ssc = SunriseSunsetCalculator(
+                SSLocation(
+                    wl.latitude.toString(), wl.longitude.toString()
+                ), TimeZone.getDefault()
+            )
+            val now = Calendar.getInstance()
+            val sunrise = ssc.getCivilSunriseCalendarForDate(now)
+            val sunset = ssc.getCivilSunsetCalendarForDate(now)
+            val nh = now.get(Calendar.HOUR)
+            val nm = now.get(Calendar.MINUTE)
+            val rh = sunrise.get(Calendar.HOUR)
+            val rm = sunrise.get(Calendar.MINUTE)
+            val sh = sunset.get(Calendar.HOUR)
+            val sm = sunset.get(Calendar.MINUTE)
+            val rise = (nh < rh) || (nh > sh) ||
+                (nh == rh && nm < rm) ||
+                (nh == sh && nm > sm)
+            time = sdf.format(if (rise) sunrise.time.time else sunset.time.time)
+            image = MonochromaticImage.Builder(
+                Icon.createWithResource(
+                    applicationContext,
+                    if (rise) R.drawable.ic_sunrise else R.drawable.ic_sunset
+                )
+            ).build()
+        }else {
+            image =MonochromaticImage.Builder(
+                Icon.createWithResource(
+                    applicationContext,
+                    R.drawable.ic_sunset
+                )
+            ).build()
+        }
         return when (request.complicationType) {
 
             ComplicationType.SHORT_TEXT -> ShortTextComplicationData.Builder(
                 text = PlainComplicationText.Builder(
-                    text = "Short"
+                    text = time
                 ).build(),
-                contentDescription = PlainComplicationText.Builder(text = "Calender")
-                    .build()
-            )
-                .build()
-
-            ComplicationType.LONG_TEXT -> LongTextComplicationData.Builder(
-                text = PlainComplicationText.Builder(
-                    text = msg
-                ).build(),
-                contentDescription = PlainComplicationText.Builder(text = "Calender")
-                    .build()
-            )
+                contentDescription = PlainComplicationText.Builder(text = "SunriseSunset").build(),
+            ).setMonochromaticImage(image)
                 .build()
 
             else -> {

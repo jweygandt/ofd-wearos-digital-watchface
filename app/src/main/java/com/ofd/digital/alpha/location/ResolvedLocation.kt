@@ -13,21 +13,20 @@
 // limitations under the License.
 package com.ofd.digital.alpha.location
 
-import android.location.Address
 import android.location.Location
-import android.text.TextUtils
 import android.text.format.DateUtils
+import com.patloew.colocation.CoGeocoder
 
 sealed class LocationResult {
     companion object
 
-    fun describeLocation(): String {
-        return when (this) {
-            is ResolvedLocation -> getAddressDescription()
-            else -> "Unknown"
-        }
-
-    }
+//    fun describeLocation(): String {
+//        return when (this) {
+//            is ResolvedLocation -> getAddressDescription()
+//            else -> "Unknown"
+//        }
+//
+//    }
 }
 
 object Unknown : LocationResult()
@@ -38,16 +37,31 @@ object NoLocation : LocationResult()
 
 data class LocationError(val e: Exception) : LocationResult()
 
-data class ResolvedLocation(val location: Location, val address: Address) : LocationResult() {
-    fun getTimeAgo(): CharSequence {
-        return DateUtils.getRelativeTimeSpanString(location.time)
+data class ResolvedLocation(private val location: Location?, private val coGeocoder: CoGeocoder?) :
+    LocationResult() {
+
+    val latitude: Double
+        get() = if (location != null) location.latitude else 0.0
+
+    val longitude: Double
+        get() = if (location != null) location.longitude else 0.0
+
+    val timeAgo: CharSequence
+        get() = if (location != null) DateUtils.getRelativeTimeSpanString(location.time) else "Error"
+
+    val valid = location != null
+
+    suspend fun getAddress() =
+        if (location != null && coGeocoder != null) coGeocoder.getAddressFromLocation(
+            location
+        ) else null
+
+    suspend fun getAddressDescription(): String {
+        val address = getAddress()
+        if (address == null) return "Null Island"
+        val state = address.adminArea
+        val city = address.locality
+        if (state != null && city != null) return city + ", " + state
+        return "Null Island"
     }
-
-    fun getAddressDescription(): String {
-        val subThoroughfare = address.subThoroughfare
-        val thoroughfare = address.thoroughfare ?: return address.countryName
-        return (if (TextUtils.isEmpty(subThoroughfare)) "" else "$subThoroughfare ") + thoroughfare
-    }
-
-
 }

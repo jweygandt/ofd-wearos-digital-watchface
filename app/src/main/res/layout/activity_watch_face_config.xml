@@ -41,15 +41,193 @@
         android:scrollbarStyle="insideOverlay"
         android:scrollbars="vertical">
 
-        <include
-            android:id="@+id/preview"
-            layout="@layout/watch_face_and_complications_preview"
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick101"
+            android:text="1"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintEnd_toStartOf="@+id/guideline2"
+            app:layout_constraintTop_toBottomOf="@+id/button3" />
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick102"
+            android:text="2"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintStart_toStartOf="@+id/guideline2"
+            app:layout_constraintTop_toTopOf="@+id/button1" />
+
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick103"
+            android:text="3"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintStart_toStartOf="@+id/button1"
+            app:layout_constraintTop_toBottomOf="@+id/button5" />
+
+        <Button
+            android:id="@+id/button4"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick104"
+            android:text="4"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintBottom_toTopOf="@+id/button2"
+            app:layout_constraintStart_toStartOf="@+id/button2" />
+
+        <Button
+            android:id="@+id/button5"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="16dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick105"
+            android:text="5"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintEnd_toStartOf="@+id/button11"
+            app:layout_constraintTop_toTopOf="@+id/button12" />
+
+        <Button
+            android:id="@+id/button6"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick106"
+            android:text="6"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintEnd_toStartOf="@+id/button3"
+            app:layout_constraintTop_toTopOf="@+id/button3" />
+
+        <Button
+            android:id="@+id/button7"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginTop="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick107"
+            android:text="7"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintStart_toEndOf="@+id/button6"
+            app:layout_constraintTop_toBottomOf="@+id/button1" />
+
+        <Button
+            android:id="@+id/button8"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick108"
+            android:text="8"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintEnd_toStartOf="@+id/button9"
+            app:layout_constraintTop_toBottomOf="@+id/button2" />
+
+        <Button
+            android:id="@+id/button11"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="1dp"
+            android:layout_marginBottom="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick111"
+            android:text="11"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintBottom_toTopOf="@+id/button4"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/button9"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginTop="8dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick109"
+            android:text="9"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintStart_toEndOf="@+id/button4"
+            app:layout_constraintTop_toTopOf="@+id/button4" />
+
+        <Button
+            android:id="@+id/button10"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginBottom="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick110"
+            android:text="10"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintBottom_toTopOf="@+id/button3"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Button
+            android:id="@+id/button12"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="1dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:onClick="onClick112"
+            android:text="12"
+            android:textColor="#F44336"
+            android:textSize="12dp"
+            app:layout_constraintStart_toEndOf="@+id/button10"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/activity_config_preview_of_watch_face_content_description"
+            android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintGuide_begin="100dp"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

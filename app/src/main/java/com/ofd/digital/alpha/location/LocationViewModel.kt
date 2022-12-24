@@ -20,11 +20,11 @@ import android.util.Log
 import com.google.android.gms.location.LocationRequest
 import com.patloew.colocation.CoGeocoder
 import com.patloew.colocation.CoLocation
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicInteger
 
-class LocationViewModel(private val loc : String, private val applicationContext: Context) {
+class LocationViewModel(private val loc: String, private val applicationContext: Context) {
     private val coGeocoder = CoGeocoder.from(applicationContext)
     private val coLocation = CoLocation.from(applicationContext)
 
@@ -40,23 +40,18 @@ class LocationViewModel(private val loc : String, private val applicationContext
             var callid = callcnt.incrementAndGet()
             Log.d(TAG, "starting to get location:${loc}:${iid}:${callid}")
             val location =
-                coLocation.getCurrentLocation(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
-            Log.d(TAG, "location:${iid}:${callid}="+location)
+                coLocation.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY)
+            Log.d(TAG, "location:${iid}:${callid}=" + location)
 
             if (location == null) {
                 NoLocation
             } else {
-                val address = coGeocoder.getAddressFromLocation(location)
-
-                if (address == null) {
-                    Unknown
-                } else {
-                    ResolvedLocation(location, address)
-                }
+                ResolvedLocation(location, coGeocoder)
             }
         }
     }
-    companion object{
+
+    companion object {
         var TAG = "LocationViewModel"
         var ictr = AtomicInteger(1)
     }

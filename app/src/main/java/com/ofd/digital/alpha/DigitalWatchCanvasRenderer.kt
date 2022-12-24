@@ -28,6 +28,7 @@ import androidx.wear.watchface.style.WatchFaceLayer
 import com.ofd.complications.LocationTest
 import com.ofd.digital.alpha.location.LocationViewModel
 import com.ofd.digital.alpha.location.ResolvedLocation
+import com.ofd.digital.alpha.location.WatchLocationService
 import com.ofd.digital.alpha.utils.*
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -62,8 +63,6 @@ class DigitalWatchCanvasRenderer(
     FRAME_PERIOD_MS_DEFAULT,
     clearWithBackgroundTintBeforeRenderingHighlightLayer = false
 ) {
-
-    private var locationViewModel: LocationViewModel? = null
 
     class DigitalSharedAssets : SharedAssets {
         override fun onDestroy() {
@@ -124,31 +123,9 @@ class DigitalWatchCanvasRenderer(
         sharedAssets: DigitalSharedAssets
     ) {
 //        Log.d(TAG, "render()")
-        var now = System.currentTimeMillis()
-        var delay = if(lastLocation.get()==null) 15000 else 60000
-        if (now - lastTime.get() > delay && renderParameters.drawMode == DrawMode.INTERACTIVE) {
-            lastTime.set(now)
-            scope.launch {
-                Log.d(WhereAmIActivity.TAG, "render:launch()")
-                val cc = callcnt.incrementAndGet()
-                if (locationViewModel == null) {
-                    locationViewModel = LocationViewModel("Watch.render", context)
-                }
-                val location = locationViewModel!!.readLocationResult()
 
-                val text = if (location is ResolvedLocation) {
-                    lastLocation.set(WatchLocation(cc, successcnt.incrementAndGet(), location))
-                    "You are at: " + location.getAddressDescription() + ":" +
-                        location.getTimeAgo()
-                } else {
-                    val ll = lastLocation.get()
-                    if(ll!=null) lastLocation.set(WatchLocation(cc, ll.successcnt, ll.location))
-                    "Error getting location"
-                }
-                Log.d(WhereAmIActivity.TAG, "render:launch():location=" + text)
-                LocationTest.forceComplicationUpdate(context)
-            }
-        }
+        WatchLocationService.doOnRender(scope, context, renderParameters)
+
         val backgroundColor = if (renderParameters.drawMode == DrawMode.AMBIENT) {
             Color.BLACK
         } else {
@@ -642,18 +619,8 @@ class DigitalWatchCanvasRenderer(
         )
     }
 
-    class WatchLocation(
-        val callcnt: Int,
-        val successcnt: Int,
-        val location: ResolvedLocation
-    )
-
     companion object {
         private const val TAG = "OFDDigitalRenderer"
 
-        val lastTime = AtomicLong(0)
-        val callcnt = AtomicInteger(0)
-        val successcnt = AtomicInteger(0)
-        val lastLocation = AtomicReference<WatchLocation>()
     }
 }
