@@ -26,6 +26,8 @@
     <uses-permission android:name="com.google.android.wearable.permission.RECEIVE_COMPLICATION_DATA_PRIVILEGED" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -83,11 +85,22 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".WhereAmIActivity"
+            android:label="Where Am I"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service
-            android:name="com.ofd.calendar.CalendarService"
+            android:name="com.ofd.complications.LocationTest"
             android:exported="true"
             android:icon="@drawable/ic_baseline_calendar_today_24"
-            android:label="Calendar"
+            android:label="Location Test"
             android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
             <intent-filter>
                 <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />

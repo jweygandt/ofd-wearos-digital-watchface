@@ -95,4 +95,7 @@
     <string name="activity_config_minute_hand_slider_text_label_content_description">Label for hand length slider below.</string>
     <string name="activity_config_minute_hand_length_slider_content_description">Slider for adjusting the minute hand length.</string>
     <string name="activity_config_screenshot_content_description">Screenshot of Watch Face</string>
+
+    <string name="location_error">Error retrieving location</string>
+
 </resources>

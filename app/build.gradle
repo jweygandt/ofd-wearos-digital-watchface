@@ -85,4 +85,9 @@ dependencies {
     implementation libs.wear.watchface.editor
     implementation libs.wear.watchface.style
     implementation 'androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1'
+
+  implementation "com.patloew.colocation:colocation:1.1.0"
+  implementation "com.github.fondesa:kpermissions-coroutines:3.3.0"
+
+
 }

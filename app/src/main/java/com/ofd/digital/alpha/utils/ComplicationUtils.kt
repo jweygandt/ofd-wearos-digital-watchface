@@ -461,10 +461,19 @@ fun createComplicationSlotManager(
         )
     ).build()
 
-    return ComplicationSlotsManager(
+    var manager = ComplicationSlotsManager(
         listOf(c12, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11),
         currentUserStyleRepository
     )
+    manager.addTapListener(listener)
+    return manager
+}
+
+object listener : ComplicationSlotsManager.TapCallback {
+    override fun onComplicationSlotTapped(complicationSlotId: Int) {
+        Log.d("TapListener", "onTap: " + complicationSlotId)
+        super.onComplicationSlotTapped(complicationSlotId)
+    }
 }
 
 val DEGTORAD = 3.1415f / 180f
@@ -490,5 +499,9 @@ class ArcTapFilter(abounds: RectF) : ComplicationTapFilter {
         )
         Log.d("OFD tapFilter", b.toString() + ":" + t.toString() + ":" + x + ":" + y)
         return t.contains(x, y)
+    }
+
+    companion object {
+        var TAG = "ComplicationUtils"
     }
 }

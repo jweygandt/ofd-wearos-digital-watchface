@@ -120,7 +120,7 @@ class OFD {
                 color = 0xFFA0A0FF.toInt() / 2 and 0xFF7F7F7F.toInt()
             })
 
-        val c11paint = Paint ().apply {
+        val c11paint = Paint().apply {
             isAntiAlias = true
             textSize = ctss
             isFakeBoldText = true
@@ -291,25 +291,16 @@ class OFD {
                 {
                     color = Color.YELLOW / 2 and 0xFF7F7F7F.toInt()
                 }),
-             4000 to mapOf(
+            4000 to mapOf(
                 DrawMode.INTERACTIVE to Paint(c11paint).apply
                 {
-                    color = Color.YELLOW
-                },
-                DrawMode.AMBIENT to Paint(c11paint).apply
-                {
-                    color = Color.YELLOW / 2 and 0xFF7F7F7F.toInt()
-                }),
-             5000 to mapOf(
-                DrawMode.INTERACTIVE to Paint(c11paint).apply
-                {
-                    color = 0xFFFFA500.toInt() // Orange
+                    color = 0xFFFFA500.toInt()
                 },
                 DrawMode.AMBIENT to Paint(c11paint).apply
                 {
                     color = 0xFFFFA500.toInt() / 2 and 0xFF7F7F7F.toInt()
                 }),
-             6000 to mapOf(
+            5000 to mapOf(
                 DrawMode.INTERACTIVE to Paint(c11paint).apply
                 {
                     color = Color.RED
@@ -318,7 +309,7 @@ class OFD {
                 {
                     color = Color.RED / 2 and 0xFF7F7F7F.toInt()
                 }),
-             7000 to mapOf(
+            6000 to mapOf(
                 DrawMode.INTERACTIVE to Paint(c11paint).apply
                 {
                     color = 0xFFA020F0.toInt() // purple
@@ -327,7 +318,16 @@ class OFD {
                 {
                     color = 0xFFA020F0.toInt() / 2 and 0xFF7F7F7F.toInt()
                 }),
-             8000 to mapOf(
+            7000 to mapOf(
+                DrawMode.INTERACTIVE to Paint(c11paint).apply
+                {
+                    color = 0xFF800000.toInt() // Maroon
+                },
+                DrawMode.AMBIENT to Paint(c11paint).apply
+                {
+                    color = 0xFF800000.toInt() / 2 and 0xFF7F7F7F.toInt()
+                }),
+            8000 to mapOf(
                 DrawMode.INTERACTIVE to Paint(c11paint).apply
                 {
                     color = 0xFF800000.toInt() // Maroon

@@ -13,25 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.calendar
+package com.ofd.complications
 
-import android.database.Cursor
-import android.net.Uri
-import android.provider.CalendarContract
+import android.content.ComponentName
+import android.content.Context
 import android.util.Log
 import androidx.wear.watchface.complications.data.*
+import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
+import com.ofd.digital.alpha.DigitalWatchCanvasRenderer
+import com.ofd.sunrisesunset.SunriseSunsetCalculator
+import com.ofd.sunrisesunset.dto.SSLocation
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 
-class CalendarService : SuspendingComplicationDataSourceService() {
+class LocationTest : SuspendingComplicationDataSourceService() {
 
 
     companion object {
         private const val TAG = "CalendarService"
 
         var uctr = AtomicInteger(0)
+
+        fun forceComplicationUpdate(applicationContext: Context) {
+            Log.d(TAG, "really updating complication")
+            val request =
+                ComplicationDataSourceUpdateRequester.create(
+                    applicationContext, ComponentName(
+                        applicationContext, LocationTest::class.java
+                    )
+                )
+            request.requestUpdateAll()
+        }
+
     }
 
 
@@ -55,53 +71,27 @@ class CalendarService : SuspendingComplicationDataSourceService() {
             .build()
     }
 
-    // Projection array. Creating indices for this array instead of doing
-// dynamic lookups improves performance.
-    private val EVENT_PROJECTION: Array<String> = arrayOf(
-        CalendarContract.Calendars._ID,                     // 0
-        CalendarContract.Calendars.ACCOUNT_NAME,            // 1
-        CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,   // 2
-        CalendarContract.Calendars.OWNER_ACCOUNT            // 3
-    )
-
-    // The indices for the projection array above.
-    private val PROJECTION_ID_INDEX: Int = 0
-    private val PROJECTION_ACCOUNT_NAME_INDEX: Int = 1
-    private val PROJECTION_DISPLAY_NAME_INDEX: Int = 2
-    private val PROJECTION_OWNER_ACCOUNT_INDEX: Int = 3
-
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         Log.d(TAG, "onComplicationRequest() id: ${request.complicationInstanceId}")
 
-        Thread {
-            // Run query
-            val uri: Uri = CalendarContract.Calendars.CONTENT_URI
-            val selection: String = "((${CalendarContract.Calendars.ACCOUNT_NAME} = ?) AND (" +
-                "${CalendarContract.Calendars.ACCOUNT_TYPE} = ?) AND (" +
-                "${CalendarContract.Calendars.OWNER_ACCOUNT} = ?))"
-            val selectionArgs: Array<String> =
-                arrayOf("hera@example.com", "com.example", "hera@example.com")
-            Log.d(TAG, "uri=" + uri)
-            val cur: Cursor? =
-                contentResolver.query(uri, EVENT_PROJECTION, null, null, null)
-            Log.d(TAG, "cur=" + cur)
-
-            if (cur != null) {
-                // Use the cursor to step through the returned records
-                while (cur.moveToNext()) {
-                    // Get the field values
-                    val calID: Long = cur.getLong(PROJECTION_ID_INDEX)
-                    val displayName: String = cur.getString(PROJECTION_DISPLAY_NAME_INDEX)
-                    val accountName: String = cur.getString(PROJECTION_ACCOUNT_NAME_INDEX)
-                    val ownerName: String = cur.getString(PROJECTION_OWNER_ACCOUNT_INDEX)
-                    // Do something with the values...
-                    Log.d(TAG, "Query: $calID, $displayName, $accountName, $ownerName")
-                }
-                Log.d(TAG, "Done with cursor")
-            } else {
-                Log.d(TAG, "Null cursor")
-            }
-        }.start()
+        val ll = DigitalWatchCanvasRenderer.lastLocation.get()
+        val msg = if (ll != null) {
+            val loc = ll.location
+            val ssc = SunriseSunsetCalculator(
+                SSLocation(
+                    loc.location.latitude.toString(),
+                    loc.location.longitude.toString()
+                ), TimeZone.getDefault()
+            )
+            val sunrise = ssc.getCivilSunriseForDate(Calendar.getInstance())
+            val sunset = ssc.getCivilSunsetForDate(Calendar.getInstance())
+            loc.getAddressDescription() + "\n" +
+                TimeZone.getDefault().id + "\n" + //loc.getTimeAgo() + "\n" +
+                ll.callcnt.toString() + ":" + ll.successcnt.toString() + " " +
+                sunrise + " " + sunset + " " + TimeZone.getDefault().id
+        } else {
+            "Error getting location"
+        }
 
         return when (request.complicationType) {
 
@@ -116,7 +106,7 @@ class CalendarService : SuspendingComplicationDataSourceService() {
 
             ComplicationType.LONG_TEXT -> LongTextComplicationData.Builder(
                 text = PlainComplicationText.Builder(
-                    text = "Line 0\nHere is line 1 and one that is long\nline 2\nline 3\nline 4\nLine5"
+                    text = msg
                 ).build(),
                 contentDescription = PlainComplicationText.Builder(text = "Calender")
                     .build()
@@ -133,5 +123,6 @@ class CalendarService : SuspendingComplicationDataSourceService() {
     override fun onComplicationDeactivated(complicationInstanceId: Int) {
         Log.d(TAG, "Deactivated")
     }
+
 
 }
