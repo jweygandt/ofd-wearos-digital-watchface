@@ -8,68 +8,68 @@ import com.ofd.digital.alpha.utils.*
 class OFD {
     companion object {
         // date top margin percent
-        public const val dateClockGapP = .057f
+        const val dateClockGapP = .057f
 
         // date bottom margin percent
-        public const val dateBottomP = .114f
+        const val dateBottomP = .114f
 
         // gap date to time percent
-        public const val dateTimeGapP = .028f
+        const val dateTimeGapP = .028f
 
         // time height percent
-        public const val timeHeightP = .200f
+        const val timeHeightP = .200f
 
         // diagnol margin to first complication
-        public const val bottomRoundClockGapP = .000f
+        const val bottomRoundClockGapP = .000f
 
         // c1/c3 spacing
-        public const val c1C3GapP = .014f
+        const val c1C3GapP = .014f
 
         // bottom icon gap
-        public const val c7C8GapP = c1C3GapP * 2f
+        const val c7C8GapP = c1C3GapP * 2f
 
         // c1/c2 spaciing
-        public const val C12GapP = .028f
+        const val C12GapP = .028f
 
         // c1/c2 extra bottom space
-        public const val c1WatchGapExtraP = .08f
+        const val c1WatchGapExtraP = .08f
 
         // c1-4 width and height
-        public const val c1WidthP = .270f
-        public const val C1HeightP = .110f
+        const val c1WidthP = .270f
+        const val C1HeightP = .110f
 
         // c3/c5 spacing
-        public const val c3C5GapP = .028f
+        const val c3C5GapP = .028f
 
         // c5/time spacing
-        public const val timeC5GapP = .028f
+        const val timeC5GapP = .028f
 
         // c5 width
-        public const val c5WidthP = .630f
+        const val c5WidthP = .630f
 
         // c6,c7 radius
-        public const val c6RadiusP = C1HeightP / 2f * 1.3f
+        const val c6RadiusP = C1HeightP / 2f * 1.3f
 
         // c1,c6 gap
-        public const val c1C6GapP = C12GapP / 4f
+        const val c1C6GapP = C12GapP / 4f
 
         // c6,c7 gap (see #3)
-        public const val g67 = C12GapP * 1.5f
+        const val g67 = C12GapP * 1.5f
 
-        public const val startAngle = -25f
-        public const val sweepAngle = 40f
+        const val startAngle = -25f
+        const val sweepAngle = 40f
 
-        public const val arcStroke = 34f
-        public const val arcText = 32f
+        const val arcStroke = 34f
+        const val arcText = 32f
 
         // The arc sweeps up, text sweepsa down
-        public const val c10startAngle = startAngle + sweepAngle
-        public const val c10sweepAngle = -sweepAngle
-        public const val c10textStartAngle = startAngle
-        public const val c10textSweepAngle = sweepAngle
+        const val c10startAngle = startAngle + sweepAngle
+        const val c10sweepAngle = -sweepAngle
+        const val c10textStartAngle = startAngle
+        const val c10textSweepAngle = sweepAngle
 
-        public const val c11startAngle = 180f - 15f
-        public const val c11sweepAngle = sweepAngle
+        const val c11startAngle = 180f - 15f
+        const val c11sweepAngle = sweepAngle
 
 //        @RequiresApi(Build.VERSION_CODES.Q)
 //        val blend = BlendMode.
@@ -150,13 +150,13 @@ class OFD {
                     isAntiAlias = true
                     textSize = cts
                     isFakeBoldText = true
-                    color = Color.RED
+                    color = 0xFFA0A0FF.toInt()
                 },
                 DrawMode.AMBIENT to Paint().apply {
                     isAntiAlias = true
                     textSize = cts
                     isFakeBoldText = true
-                    color = Color.RED / 2 and 0xFF7F7F7F.toInt()
+                    color = 0xFFA0A0FF.toInt() / 2 and 0xFF7F7F7F.toInt()
                 }),
             COMPLICATION_3 to mapOf(
                 DrawMode.INTERACTIVE to Paint().apply {
@@ -176,13 +176,13 @@ class OFD {
                     isAntiAlias = true
                     textSize = cts
                     isFakeBoldText = true
-                    color = 0xFFA0A0FF.toInt()
+                    color = Color.RED
                 },
                 DrawMode.AMBIENT to Paint().apply {
                     isAntiAlias = true
                     textSize = cts
                     isFakeBoldText = true
-                    color = 0xFFA0A0FF.toInt() / 2 and 0xFF7F7F7F.toInt()
+                    color = Color.RED / 2 and 0xFF7F7F7F.toInt()
                 }),
             COMPLICATION_5 to mapOf(
                 DrawMode.INTERACTIVE to Paint().apply {

@@ -30,9 +30,9 @@ import java.util.TimeZone;
  */
 public class SunriseSunsetCalculator {
 
-    private SSLocation location;
+    private final SSLocation location;
 
-    private SolarEventCalculator calculator;
+    private final SolarEventCalculator calculator;
 
     /**
      * Constructs a new <code>SunriseSunsetCalculator</code> with the given <code>Location</code>

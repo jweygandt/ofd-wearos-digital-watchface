@@ -37,7 +37,7 @@ object NoLocation : LocationResult()
 
 data class LocationError(val e: Exception) : LocationResult()
 
-data class ResolvedLocation(private val location: Location?, private val coGeocoder: CoGeocoder?) :
+data class ResolvedLocation(val location: Location?, private val coGeocoder: CoGeocoder?) :
     LocationResult() {
 
     val latitude: Double
@@ -55,6 +55,16 @@ data class ResolvedLocation(private val location: Location?, private val coGeoco
         if (location != null && coGeocoder != null) coGeocoder.getAddressFromLocation(
             location
         ) else null
+
+    suspend fun getShortAddress(): String {
+        val address = getAddress()
+        if (address == null) return "Null Island"
+        val city = address.locality
+        if (city != null) return city
+        val state = address.adminArea
+        if(state != null) return state
+        return "Null Island"
+    }
 
     suspend fun getAddressDescription(): String {
         val address = getAddress()

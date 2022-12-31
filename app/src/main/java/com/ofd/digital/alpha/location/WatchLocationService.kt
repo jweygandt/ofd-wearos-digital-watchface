@@ -2,12 +2,11 @@ package com.ofd.digital.alpha.location
 
 import android.content.Context
 import android.util.Log
+import androidx.wear.watchface.ComplicationSlotsManager
 import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.RenderParameters
 import com.ofd.complications.Complications
-import com.ofd.complications.LocationTest
 import com.ofd.digital.alpha.WhereAmIActivity
-import com.ofd.digital.alpha.utils.COMPLICATION_1
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -38,6 +37,11 @@ class WatchLocationService {
         // very frequent updates
         private val refreshPeriodMs = 10 * 60000
 
+        fun reset() {
+            lastTime.set(0)
+            lastLocation.set(null)
+        }
+
         class WatchLocation(
             val callcnt: Int, val successcnt: Int, val location: ResolvedLocation
         ) {
@@ -46,10 +50,12 @@ class WatchLocationService {
             val timeAgo = location.timeAgo
             val valid = location.valid
             suspend fun getAddressDescription() = location.getAddressDescription()
+            suspend fun getShortAddress() = location.getShortAddress()
         }
 
         fun doOnRender(
-            scope: CoroutineScope, context: Context, renderParameters: RenderParameters
+            scope: CoroutineScope, context: Context, renderParameters: RenderParameters,
+            complicationSlotsManager: ComplicationSlotsManager
         ) {
             var now = System.currentTimeMillis()
             var delay = if (lastLocation.get() == null) startUpMs else refreshPeriodMs
@@ -73,7 +79,7 @@ class WatchLocationService {
                         Log.e(TAG, "Problems getting location: " + location)
                     }
                     Log.d(WhereAmIActivity.TAG, "render:launch():location=" + location)
-                    Complications.forceComplicationUpdate(context)
+                    Complications.forceComplicationUpdate(context, complicationSlotsManager)
                 }
             }
         }

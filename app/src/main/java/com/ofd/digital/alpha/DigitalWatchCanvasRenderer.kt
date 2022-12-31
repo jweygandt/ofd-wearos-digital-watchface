@@ -124,7 +124,7 @@ class DigitalWatchCanvasRenderer(
     ) {
 //        Log.d(TAG, "render()")
 
-        WatchLocationService.doOnRender(scope, context, renderParameters)
+        WatchLocationService.doOnRender(scope, context, renderParameters, complicationSlotsManager)
 
         val backgroundColor = if (renderParameters.drawMode == DrawMode.AMBIENT) {
             Color.BLACK
@@ -210,11 +210,11 @@ class DigitalWatchCanvasRenderer(
             val arcBackgroundPaint = getCompPaint(complication.id, renderParameters.drawMode)
 
             val instructions = getText(d.contentDescription, zonedDateTime)
-            val inx = instructions.indexOf("#Color:")
+            val inx = instructions.indexOf("?Color:")
 //            Log.d(TAG, "txt="+instructions+":"+inx)
             val offset = if (inx > 0) {
 //                Log.d(TAG, "part:"+instructions.substring(inx+"#Color:".length))
-                (Integer.parseInt(instructions.substring(inx + "#Color:".length)) + 2) * 1000
+                (Integer.parseInt(instructions.substring(inx + "?Color:".length)) + 2) * 1000
             } else {
                 2000
             }
@@ -263,7 +263,7 @@ class DigitalWatchCanvasRenderer(
             var t = getText(d.contentDescription, zonedDateTime)
             if (t.length == 0)
                 t = getText(d.text, zonedDateTime)
-            val ix = t.indexOf("#")
+            val ix = t.indexOf("?")
             if (ix > 0) t = t.substring(0, ix)
             canvas.drawTextOnPath(
                 t,
@@ -322,7 +322,7 @@ class DigitalWatchCanvasRenderer(
         val h = bounds.bottom - bounds.top
         if (d is SmallImageComplicationData) {
             val image = d.smallImage.image
-            val drawable = image?.loadDrawable(context)
+            val drawable = image.loadDrawable(context)
             if (drawable != null) {
                 var imagebounds =
                     if (complication.id % 2 == 1) {
@@ -360,7 +360,7 @@ class DigitalWatchCanvasRenderer(
         //                    Log.d(TAG, "\t" + d.javaClass)
         //                    Log.d(TAG, "\t" + d.dataSource)
         if (d is LongTextComplicationData) {
-            val ld = d as LongTextComplicationData
+            val ld = d
             //                        Log.d(TAG, "\t" + ld.contentDescription!!.getTextAt(context.resources, Instant.now()))
             //                        Log.d(TAG, "\t" + ld.title)
             //                        Log.d(TAG, "\t" + ld.asWireComplicationData())

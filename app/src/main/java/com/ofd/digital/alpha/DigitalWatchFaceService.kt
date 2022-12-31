@@ -25,6 +25,7 @@ import androidx.wear.watchface.WatchFaceType
 import androidx.wear.watchface.WatchState
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyleSchema
+import com.ofd.digital.alpha.location.WatchLocationService
 import com.ofd.digital.alpha.utils.createComplicationSlotManager
 
 /**
@@ -50,6 +51,8 @@ class DigitalWatchFaceService : WatchFaceService() {
         currentUserStyleRepository: CurrentUserStyleRepository
     ): WatchFace {
         Log.d(TAG, "createWatchFace()")
+
+        WatchLocationService.reset()
 
         // Creates class that renders the watch face.
         val renderer = DigitalWatchCanvasRenderer(

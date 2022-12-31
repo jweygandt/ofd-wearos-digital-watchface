@@ -34,7 +34,7 @@ class SunriseSunset : SuspendingComplicationDataSourceService() {
     companion object {
         private const val TAG = "SunriseSunset"
         val uctr = AtomicInteger(0)
-        val sdf = SimpleDateFormat("H:mm")
+        val sdf = SimpleDateFormat("h:mm")
     }
 
 
@@ -67,15 +67,16 @@ class SunriseSunset : SuspendingComplicationDataSourceService() {
             val now = Calendar.getInstance()
             val sunrise = ssc.getCivilSunriseCalendarForDate(now)
             val sunset = ssc.getCivilSunsetCalendarForDate(now)
-            val nh = now.get(Calendar.HOUR)
+            val nh = now.get(Calendar.HOUR_OF_DAY)
             val nm = now.get(Calendar.MINUTE)
-            val rh = sunrise.get(Calendar.HOUR)
+            val rh = sunrise.get(Calendar.HOUR_OF_DAY)
             val rm = sunrise.get(Calendar.MINUTE)
-            val sh = sunset.get(Calendar.HOUR)
+            val sh = sunset.get(Calendar.HOUR_OF_DAY)
             val sm = sunset.get(Calendar.MINUTE)
             val rise = (nh < rh) || (nh > sh) ||
                 (nh == rh && nm < rm) ||
                 (nh == sh && nm > sm)
+            Log.d(TAG, "${rise}:${nh}:${rh}:${sh}")
             time = sdf.format(if (rise) sunrise.time.time else sunset.time.time)
             image = MonochromaticImage.Builder(
                 Icon.createWithResource(
