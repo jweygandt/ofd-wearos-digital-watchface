@@ -44,7 +44,15 @@ parties. There is also some long text complications for testing.
 Also I decided to have some fun with rendering the range complications, by providing some URL like
 parameters, see the AQI complications. 
 
+Thanks to:
+* https://github.com/odbol/air-quality-complication
+* https://github.com/google/where-am-i
+
+So still lots to do, but I'm making it public as there are so few wear os
+open source projects so far.
+
 You will need a res/values/api_kes.xml like this (in .gitignore):
+```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="purpleair_api_key_read">XXX</string>
@@ -52,11 +60,4 @@ You will need a res/values/api_kes.xml like this (in .gitignore):
 
     <string name="openweather_appid">XXX</string>
 </resources>
-
-
-Thanks to:
-* https://github.com/odbol/air-quality-complication
-* https://github.com/google/where-am-i
-
-So still lots to do, but I'm making it public as there are so few wear os
-open source projects so far.
+.```
