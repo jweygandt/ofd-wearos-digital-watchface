@@ -32,5 +32,5 @@ dependencyResolutionManagement {
     }
 }
 
-include ":app"
+include ":watch", ":phone"
 rootProject.name = "OFDDigital"
