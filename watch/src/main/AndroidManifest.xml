@@ -142,6 +142,44 @@
         </service>
 
         <service
+            android:name="com.ofd.complications.VirtualComplicationStatus"
+            android:exported="true"
+            android:icon="@drawable/ic_baseline_calendar_today_24"
+            android:label="Virtual Complication Status"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="LONG_TEXT" />
+
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="600" />
+        </service>
+
+        <service
+            android:name="com.ofd.complications.VirtualComplicationPlayPause"
+            android:exported="true"
+            android:icon="@drawable/ic_baseline_play_circle_filled_24"
+            android:label="Virtual Play/Pause"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SMALL_IMAGE" />
+
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="600" />
+        </service>
+
+        <service
             android:name="com.ofd.complications.SunriseSunset"
             android:exported="true"
             android:icon="@drawable/ic_sunrise"

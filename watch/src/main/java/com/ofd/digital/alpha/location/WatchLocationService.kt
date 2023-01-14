@@ -2,9 +2,9 @@ package com.ofd.digital.alpha.location
 
 import android.content.Context
 import android.util.Log
-import androidx.wear.watchface.ComplicationSlotsManager
 import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.RenderParameters
+import com.ofd.complications.ComplicationSlotManagerHolder
 import com.ofd.complications.Complications
 import com.ofd.digital.alpha.WhereAmIActivity
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,19 +23,19 @@ import kotlinx.coroutines.launch
 class WatchLocationService {
 
     companion object {
-        private val TAG = "WatchLocationService"
+        private const val TAG = "WatchLocationService"
         private var locationViewModel: LocationViewModel? = null
         private val lastTime = AtomicLong(0)
-        private val callcnt = AtomicInteger(0)
+        private val callcnt: AtomicInteger = AtomicInteger(0)
         private val successcnt = AtomicInteger(0)
         private val lastLocation = AtomicReference<WatchLocation>()
 
         // Seems it always fails once on startup, so try again quickly
-        private val startUpMs = 15000
+        private const val startUpMs: Int = 15000
 
         // Currently sunset/sunrise and air quality don't really need
         // very frequent updates
-        private val refreshPeriodMs = 10 * 60000
+        private const val refreshPeriodMs = 10 * 60000
 
         fun reset() {
             lastTime.set(0)
@@ -47,7 +47,7 @@ class WatchLocationService {
         ) {
             val latitude = location.latitude
             val longitude = location.longitude
-            val timeAgo = location.timeAgo
+//            val timeAgo = location.timeAgo
             val valid = location.valid
             suspend fun getAddressDescription() = location.getAddressDescription()
             suspend fun getShortAddress() = location.getShortAddress()
@@ -55,10 +55,10 @@ class WatchLocationService {
 
         fun doOnRender(
             scope: CoroutineScope, context: Context, renderParameters: RenderParameters,
-            complicationSlotsManager: ComplicationSlotsManager
+            complicationSlotsManagerHolder: ComplicationSlotManagerHolder
         ) {
-            var now = System.currentTimeMillis()
-            var delay = if (lastLocation.get() == null) startUpMs else refreshPeriodMs
+            val now = System.currentTimeMillis()
+            val delay = if (lastLocation.get() == null) startUpMs else refreshPeriodMs
             if (now - lastTime.get() > delay && renderParameters.drawMode == DrawMode.INTERACTIVE) {
                 lastTime.set(now)
                 scope.launch {
@@ -76,21 +76,21 @@ class WatchLocationService {
                             )
                         )
                     } else {
-                        Log.e(TAG, "Problems getting location: " + location)
+                        Log.e(TAG, "Problems getting location: $location")
                     }
-                    Log.d(WhereAmIActivity.TAG, "render:launch():location=" + location)
-                    Complications.forceComplicationUpdate(context, complicationSlotsManager)
+                    Log.d(WhereAmIActivity.TAG, "render:launch():location=$location")
+                    Complications.forceComplicationUpdate(context, complicationSlotsManagerHolder)
                 }
             }
         }
 
         fun getLocation(): WatchLocation {
-            val loc = lastLocation.get()
-            return if (loc != null) loc else WatchLocation(
-                callcnt.get(), successcnt.get(), ResolvedLocation(
-                    null, null
+            return lastLocation.get()
+                ?: WatchLocation(
+                    callcnt.get(), successcnt.get(), ResolvedLocation(
+                        null, null
+                    )
                 )
-            )
         }
     }
 }

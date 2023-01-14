@@ -15,20 +15,41 @@
  */
 package com.ofd.complications
 
+import android.graphics.Canvas
+import android.graphics.drawable.Icon
 import android.util.Log
 import androidx.wear.watchface.complications.data.*
+import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
-import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
-import com.odbol.wear.airquality.purpleair.AirQualitySearch
 import com.ofd.digital.alpha.OFD
-import com.ofd.digital.alpha.location.WatchLocationService
-import com.ofd.openweather.OpenWeatherAQIService
-import com.ofd.sunrisesunset.SunriseSunsetCalculator
-import com.ofd.sunrisesunset.dto.SSLocation
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
-class ComplicationStatus : SuspendingComplicationDataSourceService() {
+class VirtualComplicationStatusImpl : VirtualComplication {
+    override val type: ComplicationType
+        get() = ComplicationType.LONG_TEXT
+    override val image: Icon? get() = null
+    override val text: String
+        get() = OFD.status.get() ?: "Not yet set"
+    override val rangeValue: Float
+        get() = 0f
+    override val rangeMin: Float
+        get() = 0f
+    override val rangeMax: Float
+        get() = 0f
+
+    override fun customDrawable(
+        canvas: Canvas,
+        bleft: Float,
+        btop: Float,
+        bbottom: Float,
+        sqsize: Float
+    ): Boolean = false
+
+    override val tapCallback: Runnable?
+        get() = null
+}
+
+class VirtualComplicationStatus : ComplicationDataSourceService() {
 
 
     companion object {
@@ -59,28 +80,12 @@ class ComplicationStatus : SuspendingComplicationDataSourceService() {
             .build()
     }
 
-
-    override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
-        Log.d(TAG, "onComplicationRequest() id: ${request.complicationInstanceId}")
-
-        val wl = WatchLocationService.getLocation()
-        val ssc = SunriseSunsetCalculator(
-            SSLocation(
-                wl.latitude.toString(),
-                wl.longitude.toString()
-            ), TimeZone.getDefault()
-        )
-        val sunrise = ssc.getCivilSunriseForDate(Calendar.getInstance())
-        val sunset = ssc.getCivilSunsetForDate(Calendar.getInstance())
-        val msg = wl.getShortAddress() + ":" +
-            wl.callcnt.toString() + ":" + wl.successcnt.toString() + "\n" +
-            AirQualitySearch.lastQueryData.aqi().toInt().toString() + ":" +
-            AirQualitySearch.statusString() + "\n" +
-            OpenWeatherAQIService.OpenWeatherAQIAPI.lastQueryData.aqi.toInt() + ":" +
-            OpenWeatherAQIService.OpenWeatherAQIAPI.statusString()
-
-
-        return when (request.complicationType) {
+    override fun onComplicationRequest(
+        request: ComplicationRequest,
+        listener: ComplicationRequestListener
+    ) {
+        val msg = OFD.status.get() ?: "Not yet set"
+        val data = when (request.complicationType) {
 
             ComplicationType.SHORT_TEXT -> ShortTextComplicationData.Builder(
                 text = PlainComplicationText.Builder(
@@ -105,6 +110,7 @@ class ComplicationStatus : SuspendingComplicationDataSourceService() {
                 null
             }
         }
+        listener.onComplicationData(data)
     }
 
     override fun onComplicationDeactivated(complicationInstanceId: Int) {

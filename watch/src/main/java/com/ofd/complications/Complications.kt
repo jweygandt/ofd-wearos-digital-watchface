@@ -1,9 +1,7 @@
 package com.ofd.complications
 
-import android.content.ComponentName
 import android.content.Context
 import android.util.Log
-import androidx.wear.watchface.ComplicationSlotsManager
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 
 class Complications {
@@ -13,9 +11,10 @@ class Complications {
         var TAG = "Complications"
 
         fun forceComplicationUpdate(
-            applicationContext: Context, complicationSlotsManager: ComplicationSlotsManager
+            applicationContext: Context, complicationSlotsManagerHolder:
+            ComplicationSlotManagerHolder
         ) {
-            complicationSlotsManager.complicationSlots.forEach { cs ->
+            complicationSlotsManagerHolder.slotManager.complicationSlots.forEach { cs ->
                 val dataSource = cs.value.complicationData.value.dataSource
                 if (dataSource != null) {
                     Log.d(

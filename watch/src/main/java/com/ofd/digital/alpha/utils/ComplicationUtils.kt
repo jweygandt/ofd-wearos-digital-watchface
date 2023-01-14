@@ -30,8 +30,10 @@ import androidx.wear.watchface.complications.data.ComplicationType
 import androidx.wear.watchface.complications.rendering.CanvasComplicationDrawable
 import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 import androidx.wear.watchface.style.CurrentUserStyleRepository
+import com.ofd.complications.*
 import com.ofd.digital.alpha.OFD
 import com.ofd.digital.alpha.R
+import kotlinx.coroutines.launch
 
 private const val DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID = R.drawable.complication_red_style
 
@@ -61,17 +63,15 @@ private val c4rp = c2rp
 private val c4bp = c3bp
 
 private val c5left = .5f - .5f * OFD.c5WidthP
-private val c5top = OFD.dateBottomP +
-    OFD.dateTimeGapP + OFD.timeHeightP +
-    OFD.timeC5GapP
+private val c5top = OFD.dateBottomP + OFD.dateTimeGapP + OFD.timeHeightP + OFD.timeC5GapP
 private val c5right = .5f + .5f * OFD.c5WidthP
 private val c5bottom = c3tp - OFD.c3C5GapP
 
 private val c6cx = c3lp - OFD.c1C6GapP - OFD.c6RadiusP
 private val c6cy = c3bp + OFD.c1C3GapP / 2f
 
-private val o67 = ((OFD.c6RadiusP + .5f * OFD.c7C8GapP) /
-    Math.tan(Math.asin((OFD.c6RadiusP + .5 * OFD.c7C8GapP) / (.5f - OFD.c6RadiusP - OFD.bottomRoundClockGapP)))).toFloat()
+private val o67 =
+    ((OFD.c6RadiusP + .5f * OFD.c7C8GapP) / Math.tan(Math.asin((OFD.c6RadiusP + .5 * OFD.c7C8GapP) / (.5f - OFD.c6RadiusP - OFD.bottomRoundClockGapP)))).toFloat()
 
 private val c7cx = .5f - OFD.c6RadiusP - OFD.c7C8GapP
 private val c7cy = .5f + o67
@@ -101,14 +101,14 @@ internal const val COMPLICATION_12 = 112
 internal const val COMPLICATION_14 = 114
 
 private const val TAG = "ComplicationUtils"
+
 /**
  * Represents the unique id associated with a complication and the complication types it supports.
  */
 sealed class ComplicationConfig(val id: Int, val supportedTypes: List<ComplicationType>) {
 
     object C1 : ComplicationConfig(
-        COMPLICATION_1,
-        listOf(
+        COMPLICATION_1, listOf(
             ComplicationType.SHORT_TEXT,
 //            ComplicationType.LIST,
 //            ComplicationType.SMALL_IMAGE,
@@ -124,89 +124,78 @@ sealed class ComplicationConfig(val id: Int, val supportedTypes: List<Complicati
     )
 
     object C2 : ComplicationConfig(
-        COMPLICATION_2,
-        listOf(
+        COMPLICATION_2, listOf(
             ComplicationType.SHORT_TEXT
         )
     )
 
     object C3 : ComplicationConfig(
-        COMPLICATION_3,
-        listOf(
+        COMPLICATION_3, listOf(
             ComplicationType.SHORT_TEXT
         )
     )
 
     object C4 : ComplicationConfig(
-        COMPLICATION_4,
-        listOf(
+        COMPLICATION_4, listOf(
             ComplicationType.SHORT_TEXT
         )
     )
 
     object C5 : ComplicationConfig(
-        COMPLICATION_5,
-        listOf(
+        COMPLICATION_5, listOf(
 //            ComplicationType.RANGED_VALUE,
 //            ComplicationType.MONOCHROMATIC_IMAGE,
 //            ComplicationType.SHORT_TEXT,
 //            ComplicationType.SMALL_IMAGE,
             ComplicationType.LONG_TEXT,
-            ComplicationType.LIST
+//            ComplicationType.LIST
         )
     )
 
     object C6 : ComplicationConfig(
-        COMPLICATION_6,
-        listOf(
+        COMPLICATION_6, listOf(
             ComplicationType.SMALL_IMAGE,
         )
     )
 
     object C7 : ComplicationConfig(
-        COMPLICATION_7,
-        listOf(
+        COMPLICATION_7, listOf(
             ComplicationType.SMALL_IMAGE,
         )
     )
 
     object C8 : ComplicationConfig(
-        COMPLICATION_8,
-        listOf(
+        COMPLICATION_8, listOf(
             ComplicationType.SMALL_IMAGE,
         )
     )
 
     object C9 : ComplicationConfig(
-        COMPLICATION_9,
-        listOf(
+        COMPLICATION_9, listOf(
             ComplicationType.SMALL_IMAGE,
         )
     )
 
     object C10 : ComplicationConfig(
-        COMPLICATION_10,
-        listOf(
+        COMPLICATION_10, listOf(
             ComplicationType.RANGED_VALUE,
         )
     )
 
     object C11 : ComplicationConfig(
-        COMPLICATION_11,
-        listOf(
+        COMPLICATION_11, listOf(
             ComplicationType.RANGED_VALUE,
         )
     )
 
     object C12 : ComplicationConfig(
-        COMPLICATION_12,
-        listOf(
+        COMPLICATION_12, listOf(
             ComplicationType.SMALL_IMAGE,
         )
     )
+
     object C14 : ComplicationConfig(
-        COMPLICATION_14,
-        listOf(
+        COMPLICATION_14, listOf(
             ComplicationType.SMALL_IMAGE,
         )
     )
@@ -218,44 +207,32 @@ fun createComplicationSlotManager(
     context: Context,
     currentUserStyleRepository: CurrentUserStyleRepository,
     drawableId: Int = DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID
-): ComplicationSlotsManager {
-    val defaultCanvasComplicationFactory =
-        CanvasComplicationFactory { watchState, listener ->
-            CanvasComplicationDrawable(
-                ComplicationDrawable.getDrawable(context, drawableId)!!,
-                watchState,
-                listener
-            )
-        }
+): ComplicationSlotManagerHolder {
+    val defaultCanvasComplicationFactory = CanvasComplicationFactory { watchState, listener ->
+        CanvasComplicationDrawable(
+            ComplicationDrawable.getDrawable(context, drawableId)!!, watchState, listener
+        )
+    }
 
     // Using an arc as BACKGROUND has a bug
-    val c12 = ComplicationSlot.createEdgeComplicationSlotBuilder(
-        id = ComplicationConfig.C12.id,
+    val c12 = ComplicationSlot.createEdgeComplicationSlotBuilder(id = ComplicationConfig.C12.id,
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C12.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.NO_DATA_SOURCE,
-            ComplicationType.SMALL_IMAGE
+            SystemDataSources.NO_DATA_SOURCE, ComplicationType.SMALL_IMAGE
         ),
         bounds = ComplicationSlotBounds(
             RectF(
-                0f,
-                0f,
-                1f,
-                1f
+                0f, 0f, 1f, 1f
             )
         ),
-        object: ComplicationTapFilter{
+        object : ComplicationTapFilter {
             override fun hitTest(
-                complicationSlot: ComplicationSlot,
-                screenBounds: Rect,
-                x: Int,
-                y: Int
+                complicationSlot: ComplicationSlot, screenBounds: Rect, x: Int, y: Int
             ): Boolean {
                 return false
             }
-        }
-    ).build()
+        }).build()
 
 //    val c12y = ComplicationSlot.createBackgroundComplicationSlotBuilder(
 //        id = ComplicationConfig.C12.id,
@@ -272,11 +249,10 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C14.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.NO_DATA_SOURCE,
-            ComplicationType.SMALL_IMAGE
+            SystemDataSources.NO_DATA_SOURCE, ComplicationType.SMALL_IMAGE
         ),
         bounds = ComplicationSlotBounds(
-            RectF(0f,0f,1f,1f)
+            RectF(0f, 0f, 1f, 1f)
         )
     ).setEnabled(false).build()
 
@@ -285,34 +261,25 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C1.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.DATA_SOURCE_DAY_OF_WEEK,
-            ComplicationType.SHORT_TEXT
+            SystemDataSources.DATA_SOURCE_DAY_OF_WEEK, ComplicationType.SHORT_TEXT
         ),
         bounds = ComplicationSlotBounds(
             RectF(
-                c1lp,
-                c1tp,
-                c1rp,
-                c1bp
+                c1lp, c1tp, c1rp, c1bp
             )
         )
-    )
-        .build()
+    ).build()
 
     val c2 = ComplicationSlot.createRoundRectComplicationSlotBuilder(
         id = ComplicationConfig.C2.id,
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C2.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.DATA_SOURCE_STEP_COUNT,
-            ComplicationType.SHORT_TEXT
+            SystemDataSources.DATA_SOURCE_STEP_COUNT, ComplicationType.SHORT_TEXT
         ),
         bounds = ComplicationSlotBounds(
             RectF(
-                c2lp,
-                c2tp,
-                c2rp,
-                c2bp
+                c2lp, c2tp, c2rp, c2bp
             )
         )
     ).build()
@@ -323,15 +290,11 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C3.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.DATA_SOURCE_STEP_COUNT,
-            ComplicationType.SHORT_TEXT
+            SystemDataSources.DATA_SOURCE_STEP_COUNT, ComplicationType.SHORT_TEXT
         ),
         bounds = ComplicationSlotBounds(
             RectF(
-                c3lp,
-                c3tp,
-                c3rp,
-                c3bp
+                c3lp, c3tp, c3rp, c3bp
             )
         )
     ).build()
@@ -342,15 +305,11 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C4.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.DATA_SOURCE_STEP_COUNT,
-            ComplicationType.SHORT_TEXT
+            SystemDataSources.DATA_SOURCE_STEP_COUNT, ComplicationType.SHORT_TEXT
         ),
         bounds = ComplicationSlotBounds(
             RectF(
-                c4lp,
-                c4tp,
-                c4rp,
-                c4bp
+                c4lp, c4tp, c4rp, c4bp
             )
         )
     ).build()
@@ -360,15 +319,11 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C5.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.DATA_SOURCE_DAY_AND_DATE,
-            ComplicationType.LONG_TEXT
+            SystemDataSources.DATA_SOURCE_DAY_AND_DATE, ComplicationType.LONG_TEXT
         ),
         bounds = ComplicationSlotBounds(
             RectF(
-                c5left,
-                c5top,
-                c5right,
-                c5bottom
+                c5left, c5top, c5right, c5bottom
             )
         )
     ).build()
@@ -378,8 +333,7 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C6.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.NO_DATA_SOURCE,
-            ComplicationType.SMALL_IMAGE
+            SystemDataSources.NO_DATA_SOURCE, ComplicationType.SMALL_IMAGE
         ),
         bounds = ComplicationSlotBounds(
             RectF(
@@ -396,8 +350,7 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C7.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.NO_DATA_SOURCE,
-            ComplicationType.SMALL_IMAGE
+            SystemDataSources.NO_DATA_SOURCE, ComplicationType.SMALL_IMAGE
         ),
         bounds = ComplicationSlotBounds(
             RectF(
@@ -414,8 +367,7 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C8.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.NO_DATA_SOURCE,
-            ComplicationType.SMALL_IMAGE
+            SystemDataSources.NO_DATA_SOURCE, ComplicationType.SMALL_IMAGE
         ),
         bounds = ComplicationSlotBounds(
             RectF(
@@ -432,8 +384,7 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C9.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.NO_DATA_SOURCE,
-            ComplicationType.SMALL_IMAGE
+            SystemDataSources.NO_DATA_SOURCE, ComplicationType.SMALL_IMAGE
         ),
         bounds = ComplicationSlotBounds(
             RectF(
@@ -451,15 +402,11 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C10.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.NO_DATA_SOURCE,
-            ComplicationType.SMALL_IMAGE
+            SystemDataSources.NO_DATA_SOURCE, ComplicationType.SMALL_IMAGE
         ),
         bounds = ComplicationSlotBounds(
             RectF(
-                0f,
-                0f,
-                1f,
-                1f
+                0f, 0f, 1f, 1f
             )
         ),
         ArcTapFilter(
@@ -477,15 +424,11 @@ fun createComplicationSlotManager(
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.C11.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.NO_DATA_SOURCE,
-            ComplicationType.SMALL_IMAGE
+            SystemDataSources.NO_DATA_SOURCE, ComplicationType.SMALL_IMAGE
         ),
         bounds = ComplicationSlotBounds(
             RectF(
-                0f,
-                0f,
-                1f,
-                1f
+                0f, 0f, 1f, 1f
             )
         ),
         ArcTapFilter(
@@ -499,21 +442,36 @@ fun createComplicationSlotManager(
     ).build()
 
     // c7 is the toggle for c14, the main interceptor
+    val slots = listOf(c12, c7, c14, c1, c2, c3, c4, c5, c6, c8, c9, c10, c11)
     var manager = ComplicationSlotsManager(
-        listOf(c12, c7, c14, c1, c2, c3, c4, c5, c6, c8, c9, c10, c11),
-        currentUserStyleRepository
+        slots, currentUserStyleRepository
     )
+    val wrappers = slots.map { ComplicationWrapper(it) }
 
     Log.d(TAG, "Repo: " + currentUserStyleRepository.toString())
     Log.d(TAG, "Style: " + currentUserStyleRepository.userStyle.value.toMutableUserStyle().size)
 
-    manager.addTapListener(listener)
-    return manager
+    val mgrh = ComplicationSlotManagerHolder(manager, wrappers)
+    manager.addTapListener(Listener(mgrh, currentUserStyleRepository))
+    return mgrh
 }
 
-object listener : ComplicationSlotsManager.TapCallback {
+class Listener(
+    val mgrh: ComplicationSlotManagerHolder,
+    val currentUserStyleRepository: CurrentUserStyleRepository
+) : ComplicationSlotsManager.TapCallback {
     override fun onComplicationSlotTapped(complicationSlotId: Int) {
         Log.d("ComplicationUtils", "onTap: " + complicationSlotId)//, Throwable("traceback"))
+        val cw = mgrh.slotWrappers.find { cw -> cw.id == complicationSlotId }
+        if (complicationSlotId == COMPLICATION_14) {
+            mgrh.watch!!.scope.launch {
+                VirtualComplicationPlayPauseImpl.toggleMusic(mgrh.watch!!)
+            }
+        } else if (cw != null) {
+            val cb =
+                cw.virtualComplication(null, null, null, currentUserStyleRepository).tapCallback
+            if (cb != null) cb.run()
+        }
     }
 }
 
@@ -525,18 +483,12 @@ private fun cosf(deg: Float) = Math.cos(deg.toDouble() * DEGTORAD).toFloat()
 class ArcTapFilter(abounds: RectF) : ComplicationTapFilter {
     val b = abounds
     override fun hitTest(
-        complicationSlot: ComplicationSlot,
-        screenBounds: Rect,
-        x: Int,
-        y: Int
+        complicationSlot: ComplicationSlot, screenBounds: Rect, x: Int, y: Int
     ): Boolean {
         val w = (screenBounds.right - screenBounds.left).toFloat()
         val h = (screenBounds.bottom - screenBounds.top).toFloat()
         val t = Rect(
-            (b.left * w).toInt(),
-            (b.top * h).toInt(),
-            (b.right * w).toInt(),
-            (b.bottom * h).toInt()
+            (b.left * w).toInt(), (b.top * h).toInt(), (b.right * w).toInt(), (b.bottom * h).toInt()
         )
         Log.d("OFD tapFilter", b.toString() + ":" + t.toString() + ":" + x + ":" + y)
         return t.contains(x, y)

@@ -16,9 +16,6 @@
 package com.ofd.digital.alpha.datalayer
 
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -27,17 +24,15 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.material.MaterialTheme
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.wearable.*
-import java.io.ByteArrayOutputStream
-import java.time.Duration
-import java.time.Instant
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -58,54 +53,45 @@ class MainActivity : ComponentActivity() {
     private val messageClient by lazy { Wearable.getMessageClient(this) }
     private val capabilityClient by lazy { Wearable.getCapabilityClient(this) }
 
-    private val isCameraSupported by lazy {
-        packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
-    }
-
-    private val clientDataViewModel by viewModels<ClientDataViewModel>()
-
-    private val takePhotoLauncher = registerForActivityResult(
-        ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        clientDataViewModel.onPictureTaken(bitmap = bitmap)
-    }
+    private var clientDataViewModel: ClientDataViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        mAudioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        clientDataViewModel = ClientDataViewModel()
 
         var count = 0
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                // Set the initial trigger such that the first count will happen in one second.
-                var lastTriggerTime = Instant.now() - (countInterval - Duration.ofSeconds(1))
-                while (isActive) {
-                    // Figure out how much time we still have to wait until our next desired trigger
-                    // point. This could be less than the count interval if sending the count took
-                    // some time.
-                    delay(
-                        Duration.between(Instant.now(), lastTriggerTime + countInterval).toMillis()
-                    )
-                    // Update when we are triggering sending the count
-                    lastTriggerTime = Instant.now()
-                    sendCount(count)
-
-                    // Increment the count to send next time
-                    count++
-                }
+//                // Set the initial trigger such that the first count will happen in one second.
+//                var lastTriggerTime = Instant.now() - (countInterval - Duration.ofSeconds(1))
+//                while (isActive) {
+//                    // Figure out how much time we still have to wait until our next desired trigger
+//                    // point. This could be less than the count interval if sending the count took
+//                    // some time.
+//                    delay(
+//                        Duration.between(Instant.now(), lastTriggerTime + countInterval).toMillis()
+//                    )
+//                    // Update when we are triggering sending the count
+//                    lastTriggerTime = Instant.now()
+//                    sendCount(count)
+//
+//                    // Increment the count to send next time
+//                    count++
+//                }
             }
         }
 
         setContent {
             MaterialTheme {
                 MainApp(
-                    events = clientDataViewModel.events,
-                    image = clientDataViewModel.image,
-                    isCameraSupported = isCameraSupported,
-                    onTakePhotoClick = ::takePhoto,
-                    onSendPhotoClick = ::sendPhoto,
+                    events = clientDataViewModel!!.events,
+                    image = clientDataViewModel!!.image,
                     onStartWearableActivityClick = ::startWearableActivity,
-                    onPauseMusicClick = ::pauseMusic
+                    onPauseMusicClick = ::pauseMusic,
+                    onResumeMusicClick = ::resumeMusic
                 )
             }
         }
@@ -113,53 +99,24 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        dataClient.addListener(clientDataViewModel)
-        messageClient.addListener(clientDataViewModel)
+        dataClient.addListener(clientDataViewModel!!)
+        messageClient.addListener(clientDataViewModel!!)
         capabilityClient.addListener(
-            clientDataViewModel,
-            Uri.parse("wear://"),
-            CapabilityClient.FILTER_REACHABLE
+            clientDataViewModel!!, Uri.parse("wear://"), CapabilityClient.FILTER_REACHABLE
         )
-
-        if (isCameraSupported) {
-            lifecycleScope.launch {
-                try {
-                    capabilityClient.addLocalCapability(CAMERA_CAPABILITY).await()
-                } catch (cancellationException: CancellationException) {
-                    throw cancellationException
-                } catch (exception: Exception) {
-                    Log.e(TAG, "Could not add capability: $exception")
-                }
-            }
-        }
     }
 
     override fun onPause() {
         super.onPause()
-        dataClient.removeListener(clientDataViewModel)
-        messageClient.removeListener(clientDataViewModel)
-        capabilityClient.removeListener(clientDataViewModel)
-
-        lifecycleScope.launch {
-            // This is a judicious use of NonCancellable.
-            // This is asynchronous clean-up, since the capability is no longer available.
-            // If we allow this to be cancelled, we may leave the capability in-place for other
-            // nodes to see.
-            withContext(NonCancellable) {
-                try {
-                    capabilityClient.removeLocalCapability(CAMERA_CAPABILITY).await()
-                } catch (exception: Exception) {
-                    Log.e(TAG, "Could not remove capability: $exception")
-                }
-            }
-        }
+//        dataClient.removeListener(clientDataViewModel)
+//        messageClient.removeListener(clientDataViewModel)
+//        capabilityClient.removeListener(clientDataViewModel)
     }
 
     private fun startWearableActivity() {
         lifecycleScope.launch {
             try {
-                val caps = capabilityClient
-                    .getAllCapabilities(CapabilityClient.FILTER_REACHABLE)
+                val caps = capabilityClient.getAllCapabilities(CapabilityClient.FILTER_REACHABLE)
 //                    .getCapability(WEAR_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
                     .await()
 
@@ -186,30 +143,52 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun pauseMusic() {
-        Log.d(TAG, "Pausing")
-        val mAudioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        if(mAudioManager.isMusicActive)
-            Log.d(TAG, "Music active")
-        
-        if (false ) {
-            Log.d(TAG, "Pausing by button")
-            val i = Intent("com.android.music.musicservicecommand")
-            i.putExtra("command", "pause")
-            applicationContext.sendBroadcast(i)
-        } else {
+
+    companion object {
+
+
+        private const val TAG = "MainActivity"
+
+        private const val START_ACTIVITY_PATH = "/start-activity"
+        private const val COUNT_PATH = "/count"
+        private const val COUNT_KEY = "count"
+        private const val WEAR_CAPABILITY = "wear"
+
+        var mAudioManager: AudioManager? = null
+        var mFocusRequest: AudioFocusRequest? = null
+
+        fun togglePlayback() {
+            if(mFocusRequest==null)
+                pauseMusic()
+            else
+                resumeMusic()
+        }
+
+        fun resumeMusic() {
+            if (mFocusRequest == null) {
+                Log.d(TAG, "No pause to resume from")
+            } else {
+                Log.d(TAG, "Resuming")
+                mAudioManager!!.abandonAudioFocusRequest(mFocusRequest!!)
+            }
+            mFocusRequest = null
+        }
+
+        fun pauseMusic() {
+            Log.d(TAG, "Pausing")
+            if (mAudioManager!!.isMusicActive) Log.d(TAG, "Music active")
+
             Log.d(TAG, "Pausing by focus")
-            val mPlaybackAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build()
-            val mFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            val mPlaybackAttributes =
+                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
+            mFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
                 .setAudioAttributes(mPlaybackAttributes)
 //                        .setAcceptsDelayedFocusGain(true)
 //                        .setWillPauseWhenDucked(true)
 //                        .setOnAudioFocusChangeListener(this, Handler(){d -> })
                 .build()
-            val res = mAudioManager.requestAudioFocus(mFocusRequest)
+            val res = mAudioManager!!.requestAudioFocus(mFocusRequest!!)
             if (res == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
                 Log.d(TAG, "Failed")
             } else if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -218,77 +197,5 @@ class MainActivity : ComponentActivity() {
                 Log.d(TAG, "Delayed")
             }
         }
-    }
-
-    private fun takePhoto() {
-        if (!isCameraSupported) return
-        takePhotoLauncher.launch(null)
-    }
-
-    private fun sendPhoto() {
-        lifecycleScope.launch {
-            try {
-                val image = clientDataViewModel.image ?: return@launch
-                val imageAsset = image.toAsset()
-                val request = PutDataMapRequest.create(IMAGE_PATH).apply {
-                    dataMap.putAsset(IMAGE_KEY, imageAsset)
-                    dataMap.putLong(TIME_KEY, Instant.now().epochSecond)
-                }
-                    .asPutDataRequest()
-                    .setUrgent()
-
-                val result = dataClient.putDataItem(request).await()
-
-                Log.d(TAG, "DataItem saved: $result")
-            } catch (cancellationException: CancellationException) {
-                throw cancellationException
-            } catch (exception: Exception) {
-                Log.d(TAG, "Saving DataItem failed: $exception")
-            }
-        }
-    }
-
-    private suspend fun sendCount(count: Int) {
-        try {
-            val request = PutDataMapRequest.create(COUNT_PATH).apply {
-                dataMap.putInt(COUNT_KEY, count)
-            }
-                .asPutDataRequest()
-                .setUrgent()
-
-            val result = dataClient.putDataItem(request).await()
-
-            Log.d(TAG, "DataItem saved: $result")
-        } catch (cancellationException: CancellationException) {
-            throw cancellationException
-        } catch (exception: Exception) {
-            Log.d(TAG, "Saving DataItem failed: $exception")
-        }
-    }
-
-    /**
-     * Converts the [Bitmap] to an asset, compress it to a png image in a background thread.
-     */
-    private suspend fun Bitmap.toAsset(): Asset =
-        withContext(Dispatchers.Default) {
-            ByteArrayOutputStream().use { byteStream ->
-                compress(Bitmap.CompressFormat.PNG, 100, byteStream)
-                Asset.createFromBytes(byteStream.toByteArray())
-            }
-        }
-
-    companion object {
-        private const val TAG = "MainActivity"
-
-        private const val START_ACTIVITY_PATH = "/start-activity"
-        private const val COUNT_PATH = "/count"
-        private const val IMAGE_PATH = "/image"
-        private const val IMAGE_KEY = "photo"
-        private const val TIME_KEY = "time"
-        private const val COUNT_KEY = "count"
-        private const val CAMERA_CAPABILITY = "camera"
-        private const val WEAR_CAPABILITY = "wear"
-
-        private val countInterval = Duration.ofSeconds(5)
     }
 }

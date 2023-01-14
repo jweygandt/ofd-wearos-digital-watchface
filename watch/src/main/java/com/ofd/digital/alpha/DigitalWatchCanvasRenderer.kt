@@ -16,18 +16,17 @@
 package com.ofd.digital.alpha
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.*
-import android.media.AudioAttributes
-import android.media.AudioFocusRequest
-import android.media.AudioManager
-import android.os.Handler
 import android.util.Log
 import android.view.SurfaceHolder
 import androidx.core.graphics.toRectF
 import androidx.wear.watchface.*
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.style.*
+import com.google.android.gms.wearable.Wearable
+import com.ofd.complications.ComplicationSlotManagerHolder
+import com.ofd.complications.ComplicationWrapper
+import com.ofd.complications.VirtualComplicationPlayPauseImpl
 import com.ofd.digital.alpha.location.WatchLocationService
 import com.ofd.digital.alpha.utils.*
 import java.time.ZonedDateTime
@@ -51,8 +50,8 @@ val cnt = AtomicInteger(0)
 class DigitalWatchCanvasRenderer(
     private val context: Context,
     surfaceHolder: SurfaceHolder,
-    watchState: WatchState,
-    private val complicationSlotsManager: ComplicationSlotsManager,
+    val watchState: WatchState,
+    private val complicationSlotManagerHolder: ComplicationSlotManagerHolder,
     private val currentUserStyleRepository: CurrentUserStyleRepository,
     canvasType: Int
 ) : Renderer.CanvasRenderer2<DigitalWatchCanvasRenderer.DigitalSharedAssets>(
@@ -70,12 +69,26 @@ class DigitalWatchCanvasRenderer(
         }
     }
 
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    val dataClient by lazy { Wearable.getDataClient(context) }
+    val messageClient by lazy { Wearable.getMessageClient(context) }
+    val capabilityClient by lazy { Wearable.getCapabilityClient(context) }
 
     init {
+        val renderer = this
+        complicationSlotManagerHolder.watch=this
         scope.launch {
             currentUserStyleRepository.userStyle.collect { userStyle ->
                 updateWatchFaceData(userStyle)
+            }
+        }
+        scope.launch {
+            watchState.isVisible.collect() { v ->
+                VirtualComplicationPlayPauseImpl.setWatchState(
+                    renderer,
+                    v
+                )
             }
         }
     }
@@ -109,7 +122,7 @@ class DigitalWatchCanvasRenderer(
             canvas.drawColor(hl.backgroundTint)
         }
 
-        for ((_, complication) in complicationSlotsManager.complicationSlots) {
+        for (complication in complicationSlotManagerHolder.slotWrappers) {
             if (complication.enabled) {
                 complication.renderHighlightLayer(canvas, zonedDateTime, renderParameters)
             }
@@ -125,34 +138,12 @@ class DigitalWatchCanvasRenderer(
     ) {
 //        Log.d(TAG, "render()")
 
-        val c = cnt.incrementAndGet()
-        if (c % 20 == 0 && false) {
-            val i = if (c % 40 == 0) 0 else 1
-            Log.d(TAG, "Setting style: " + i)
-            var styleSetting = currentUserStyleRepository.schema.userStyleSettings.get(0)
-            var defaultOption = styleSetting.options.get(i)
-            val newStyle: UserStyle = UserStyle(
-                selectedOptions = mapOf(
-                    Pair(
-                        styleSetting,
-                        defaultOption
-                    )
-                )
-            )
-            currentUserStyleRepository.updateUserStyle(newStyle)
-//            Log.d(TAG, "Style set")
-        }
-//        Log.d(TAG, "Repo: " + currentUserStyleRepository.toString())
-//        Log.d(TAG, "Style: " + currentUserStyleRepository.userStyle.value.toMutableUserStyle().size)
-//        Log.d(TAG, "Style: " + currentUserStyleRepository.schema.toString())
-//        Log.d(TAG, "Schema: " + currentUserStyleRepository.schema.getDefaultUserStyle().size)
-
-        var overlay =
-            UserStyleSetting.ComplicationSlotsUserStyleSetting.ComplicationSlotOverlay.Builder(
-                COMPLICATION_2
-            ).setEnabled(false).build()
-
-        WatchLocationService.doOnRender(scope, context, renderParameters, complicationSlotsManager)
+        WatchLocationService.doOnRender(
+            scope,
+            context,
+            renderParameters,
+            complicationSlotManagerHolder
+        )
 
         val backgroundColor = if (renderParameters.drawMode == DrawMode.AMBIENT) {
             Color.BLACK
@@ -181,7 +172,7 @@ class DigitalWatchCanvasRenderer(
 
     // ----- All drawing functions -----
     private fun drawComplications(canvas: Canvas, bounds: Rect, zonedDateTime: ZonedDateTime) {
-        for ((_, complication) in complicationSlotsManager.complicationSlots) {
+        for (complication in complicationSlotManagerHolder.slotWrappers) {
 //            Log.d(TAG,"Complication: " + complication.id +":"+complication.enabled)
             if (complication.enabled) {
 //                Log.d(
@@ -189,12 +180,7 @@ class DigitalWatchCanvasRenderer(
 //                    "  Enabled: " + complication.id + ":" + complication.complicationData.value.type
 //                )
                 if (complication.id <= COMPLICATION_4) {
-                    val v = complication.complicationData.value
-                    if (v is SmallImageComplicationData) {
-                        Log.d(TAG, "SI = ")
-                    } else {
-                        drawSmallTextAndIcon(complication, canvas, zonedDateTime)
-                    }
+                    drawSmallTextAndIcon(complication, canvas, zonedDateTime)
                 } else if (complication.id == COMPLICATION_5) {
                     drawLongText(complication, zonedDateTime, canvas)
                 } else if (((COMPLICATION_6 <= complication.id && complication.id <= COMPLICATION_9) || complication.id == COMPLICATION_12) && renderParameters.drawMode == DrawMode.INTERACTIVE) {
@@ -202,7 +188,7 @@ class DigitalWatchCanvasRenderer(
                 } else if (COMPLICATION_10 <= complication.id && complication.id <= COMPLICATION_11) {
                     drawArc(complication, zonedDateTime, canvas)
                 } else if (COMPLICATION_14 == complication.id) {
-                    doIntereception()
+                    // ignore all rendering
                 } else if (renderParameters.drawMode == DrawMode.INTERACTIVE) {
                     Log.d(
                         TAG, "something else: bounds: + " + complication.computeBounds(
@@ -211,68 +197,31 @@ class DigitalWatchCanvasRenderer(
                             )
                         )
                     )
-                    complication.render(canvas, zonedDateTime, renderParameters)
+                    complication.defaultRender(canvas, zonedDateTime, renderParameters)
                 }
             }
         }
     }
 
-    private fun doIntereception() {
-        val c = cnt.get()
-        if (c < 80) {
-            OFD.status.set("C:" + c)
-        } else
-            if (c == 80) {
-                OFD.status.set("C:" + c + " Set")
-                val mAudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
-                if (true || mAudioManager.isMusicActive) {
-                    OFD.status.set("C:" + c + " Set++")
-                    val i = Intent("com.android.music.musicservicecommand")
-                    i.putExtra("command", "pause")
-                    context.sendBroadcast(i)
-                } else {
-                    OFD.status.set("C:" + c + " Set by request")
-                    val mPlaybackAttributes = AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .build()
-                    val mFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                        .setAudioAttributes(mPlaybackAttributes)
-//                        .setAcceptsDelayedFocusGain(true)
-//                        .setWillPauseWhenDucked(true)
-//                        .setOnAudioFocusChangeListener(this, Handler(){d -> })
-                        .build()
-                    val res = mAudioManager.requestAudioFocus(mFocusRequest)
-                    if (res == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
-                        OFD.status.set("C:" + c + " failed")
-                    } else if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                        OFD.status.set("C:" + c + " OK")
-                    } else if (res == AudioManager.AUDIOFOCUS_REQUEST_DELAYED) {
-                        OFD.status.set("C:" + c + " delayed")
-                    }
-                }
-            } else if (c == 300) {
-                OFD.status.set("C:" + c + " mid")
-            } else {
-//                OFD.status.set("C:" + c + " done")
-            }
-    }
-
     private fun drawArc(
-        complication: ComplicationSlot, zonedDateTime: ZonedDateTime, canvas: Canvas
+        complicationWrapper: ComplicationWrapper, zonedDateTime: ZonedDateTime, canvas: Canvas
     ) {
-        val d = complication.complicationData.value
-        if (d is RangedValueComplicationData) {
+        val complication =
+            complicationWrapper.virtualComplication(
+                this, context, zonedDateTime.toInstant(),
+                currentUserStyleRepository
+            )
+        val type = complication.type
+        if (type == ComplicationType.RANGED_VALUE) {
 //            Log.d(TAG, "Range Value mono image: " + d.monochromaticImage)
 //            Log.d(TAG, "Range Value text: " + getText(d.text, zonedDateTime))
 //            Log.d(TAG, "Range Value title: " + getText(d.title, zonedDateTime))
 //            Log.d(TAG, "Range Value dexcription: " + getText(d.contentDescription, zonedDateTime))
             val cbounds =
-                complication.computeBounds(Rect(0, 0, canvas.width, canvas.height)).toRectF()
-            val arcBackgroundPaint = getCompPaint(complication.id, renderParameters.drawMode)
+                complicationWrapper.computeBounds(Rect(0, 0, canvas.width, canvas.height)).toRectF()
+            val arcBackgroundPaint = getCompPaint(complicationWrapper.id, renderParameters.drawMode)
 
-            val instructions = getText(d.contentDescription, zonedDateTime)
+            val instructions = complication.text
             val inx = instructions.indexOf("?Color:")
 //            Log.d(TAG, "txt="+instructions+":"+inx)
             val offset = if (inx > 0) {
@@ -282,34 +231,40 @@ class DigitalWatchCanvasRenderer(
                 2000
             }
             val selector = if (offset == 2000) {
-                complication.id + 2000
+                complicationWrapper.id + 2000
             } else {
                 offset
             }
             val arcValuePaint = getCompPaint(selector, renderParameters.drawMode)
             val off =
-                arcValuePaint.strokeWidth / 2f * 1.1f * if (complication.id == COMPLICATION_10) 1 else 1
+                arcValuePaint.strokeWidth / 2f * 1.1f * if (complicationWrapper.id == COMPLICATION_10)
+                    1 else 1
             val bounds = RectF(
                 cbounds.left + off,
                 cbounds.top + off,
                 cbounds.right - 1f * off,
                 cbounds.bottom - 1f * off
             )
-            val valueSweepAngle = OFD.sweepAngle * Math.min(1f, (d.value - d.min) / (d.max - d.min))
+            val valueSweepAngle = OFD.sweepAngle * Math.min(
+                1f, (complication.rangeValue -
+                    complication.rangeMin) /
+                    (complication.rangeMax
+                        - complication.rangeMin)
+            )
 
-            val (backgroundStart, backgroundSweep) = if (complication.id == COMPLICATION_10) {
+            val (backgroundStart, backgroundSweep) = if (complicationWrapper.id == COMPLICATION_10) {
                 arrayOf(OFD.c10startAngle, OFD.c10sweepAngle)
             } else {
                 arrayOf(OFD.c11startAngle, OFD.c11sweepAngle)
             }
 
-            val (valueStart, valueSweep) = if (complication.id == COMPLICATION_10) {
+            val (valueStart, valueSweep) = if (complicationWrapper.id == COMPLICATION_10) {
                 arrayOf(backgroundStart, -valueSweepAngle)
             } else {
                 arrayOf(backgroundStart, valueSweepAngle)
             }
 
-            val (textStart, textSweep) = if (complication.id == COMPLICATION_10) {
+            val (textStart, textSweep) = if (complicationWrapper.id == COMPLICATION_10) {
                 arrayOf(OFD.c10textStartAngle, OFD.c10textSweepAngle)
             } else {
                 arrayOf(backgroundStart, backgroundSweep)
@@ -319,12 +274,11 @@ class DigitalWatchCanvasRenderer(
             canvas.drawArc(bounds, backgroundStart, backgroundSweep, false, arcBackgroundPaint)
             canvas.drawArc(bounds, valueStart, valueSweep, false, arcValuePaint)
 
-            val textPaint2 = getCompPaint(complication.id + 1000, renderParameters.drawMode)
+            val textPaint2 = getCompPaint(complicationWrapper.id + 1000, renderParameters.drawMode)
             val textPath = Path()
 //            Log.d(TAG, "Path: " + bounds + ":" + textStart + ":" + textSweep)
             textPath.addArc(bounds, textStart, textSweep)
-            var t = getText(d.contentDescription, zonedDateTime)
-            if (t.length == 0) t = getText(d.text, zonedDateTime)
+            var t = complication.text
             val ix = t.indexOf("?")
             if (ix > 0) t = t.substring(0, ix)
             canvas.drawTextOnPath(
@@ -367,20 +321,24 @@ class DigitalWatchCanvasRenderer(
 
 
     private fun drawIcon(
-        complication: ComplicationSlot, canvas: Canvas
+        complicationWrapper: ComplicationWrapper, canvas: Canvas
     ) {
-        val textPaint = getCompPaint(complication.id, renderParameters.drawMode)
-        val bounds = complication.computeBounds(Rect(0, 0, canvas.width, canvas.height))
-        //Log.d(TAG, "bounds: " + complication.id + ":"+ bounds)
+        val complication = complicationWrapper.virtualComplication(
+            this, context,
+            null,
+            currentUserStyleRepository
+        )
+        val textPaint = getCompPaint(complicationWrapper.id, renderParameters.drawMode)
+        val bounds = complicationWrapper.computeBounds(Rect(0, 0, canvas.width, canvas.height))
+        //Log.d(TAG, "bounds: " + complicationWrapper.id + ":"+ bounds)
         val left = bounds.left.toFloat()
         val bottom = bounds.bottom.toFloat()
-        val d = complication.complicationData.value
         val h = bounds.bottom - bounds.top
-        if (d is SmallImageComplicationData) {
-            val image = d.smallImage.image
-            val drawable = image.loadDrawable(context)
+        if (complication.type == ComplicationType.SMALL_IMAGE) {
+            val image = complication.image
+            val drawable = image?.loadDrawable(context)
             if (drawable != null) {
-                var imagebounds = if (complication.id % 2 == 1) {
+                var imagebounds = if (complicationWrapper.id % 2 == 1) {
                     Rect(bounds.right - h, bounds.top, bounds.right, bounds.bottom)
                 } else {
                     Rect(bounds.left, bounds.top, bounds.left + h, bounds.bottom)
@@ -403,34 +361,25 @@ class DigitalWatchCanvasRenderer(
     }
 
     private fun drawLongText(
-        complication: ComplicationSlot, zonedDateTime: ZonedDateTime, canvas: Canvas
+        complicationWrapper: ComplicationWrapper, zonedDateTime: ZonedDateTime, canvas: Canvas
     ) {
         //                    Log.d(TAG, "Complication 5: " + complication.javaClass)
         //                    Log.d(TAG, "\t" + complication.complicationData.javaClass)
         //                    Log.d(TAG, "\t" + complication.complicationData.toString())
-        val d = complication.complicationData.value
         //                    Log.d(TAG, "\t" + d.toString())
         //                    Log.d(TAG, "\t" + d.javaClass)
         //                    Log.d(TAG, "\t" + d.dataSource)
-        if (d is LongTextComplicationData) {
-            val ld = d
+        val complication = complicationWrapper.virtualComplication(
+            this, context, zonedDateTime
+                .toInstant(), currentUserStyleRepository
+        )
+        if (complication.type == ComplicationType.LONG_TEXT) {
             //                        Log.d(TAG, "\t" + ld.contentDescription!!.getTextAt(context.resources, Instant.now()))
             //                        Log.d(TAG, "\t" + ld.title)
             //                        Log.d(TAG, "\t" + ld.asWireComplicationData())
-            val commonStatus = OFD.status.get()
-            val ds = d.dataSource
-            val text = if (commonStatus != null && ds != null && ds.className.endsWith
-                    ("ComplicationStatus")
-            )
-                commonStatus
-            else
-                d.text.getTextAt(
-                    context.resources,
-                    zonedDateTime.toInstant()
-                )
-                    .toString()
-            val bounds = complication.computeBounds(Rect(0, 0, canvas.width, canvas.height))
-            val textPaint = getCompPaint(complication.id, renderParameters.drawMode)
+            val text = complication.text
+            val bounds = complicationWrapper.computeBounds(Rect(0, 0, canvas.width, canvas.height))
+            val textPaint = getCompPaint(complicationWrapper.id, renderParameters.drawMode)
             canvas.save()
             canvas.clipRect(bounds)
             val textBounds = Rect()
@@ -466,117 +415,64 @@ class DigitalWatchCanvasRenderer(
         } else {
             //                        Log.d(TAG, "value: " + d)
             //                        Log.d(TAG, "value2:" + d.dataSource)
-            complication.render(canvas, zonedDateTime, renderParameters)
+            complicationWrapper.defaultRender(canvas, zonedDateTime, renderParameters)
         }
     }
 
     private fun drawSmallTextAndIcon(
-        complication: ComplicationSlot, canvas: Canvas, zonedDateTime: ZonedDateTime
+        complicationWrapper: ComplicationWrapper, canvas: Canvas, zonedDateTime: ZonedDateTime
     ) {
-        val bounds = complication.computeBounds(Rect(0, 0, canvas.width, canvas.height))
+        val bounds = complicationWrapper.computeBounds(Rect(0, 0, canvas.width, canvas.height))
 
         canvas.drawRoundRect(
             bounds.toRectF(), bounds.height() * .2f, bounds.height() * .2f, OFD.blackBackground
         )
 
 //        Log.d(TAG, "smallTextAndIcon: " + complication.complicationData.value.dataSource?.className)
-        //Log.d(TAG, "bounds: " + complication.id + ":"+ bounds)
+        //Log.d(TAG, "bounds: " + complicationWrapper.id + ":"+ bounds)
 
         val left = bounds.left.toFloat()
         val bottom = bounds.bottom.toFloat()
-        val d = complication.complicationData.value
         val h = bounds.bottom - bounds.top
-        if (d is ShortTextComplicationData) {
-            val textAt = d.text.getTextAt(context.resources, zonedDateTime.toInstant()).toString()
-            val image = d.monochromaticImage?.image
+        val complication = complicationWrapper.virtualComplication(
+            this, context,
+            zonedDateTime.toInstant(),
+            currentUserStyleRepository
+        )
+        if (complication.type == ComplicationType.SHORT_TEXT) {
+            val textAt = complication.text
+            val image = complication.image
             val drawable = image?.loadDrawable(context)
             var textClipBounds = bounds
-            val ds = complication.complicationData.value.dataSource
-            if (ds != null && ds.className.endsWith("BatteryProviderService")) {
-                val batteryPaint = Paint().apply {
-                    isAntiAlias = true
-                    color = Color.GRAY
-                    style = Paint.Style.FILL_AND_STROKE
-                    strokeCap = Paint.Cap.BUTT
-                    strokeWidth = h / 4f
-                }
-
-                val pct = Integer.parseInt(textAt).toFloat()
-                val cut = (1f - pct / 100f) * .8f * h + .1f * h
-                val fillcolor =
-                    if (pct > 25f) Color.GREEN else if (pct > 10f) Color.YELLOW else Color.RED
-
-                if (cut < .3f * h) {
-                    canvas.drawLine(
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + .1f * h,
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + cut,
-                        batteryPaint
-                    )
-                    batteryPaint.color = fillcolor
-                    canvas.drawLine(
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + cut,
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + .4f * h,
-                        batteryPaint
-                    )
-                    batteryPaint.strokeWidth = h / 2.5f
-                    canvas.drawLine(
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + .3f * h,
-                        bounds.left + h / 2f,
-                        bounds.bottom.toFloat() - .1f * h,
-                        batteryPaint
-                    )
-                } else {
-                    canvas.drawLine(
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + .1f * h,
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + .4f * h,
-                        batteryPaint
-                    )
-                    batteryPaint.strokeWidth = h / 2.5f
-                    canvas.drawLine(
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + .3f * h,
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + cut,
-                        batteryPaint
-                    )
-                    batteryPaint.color = fillcolor
-                    canvas.drawLine(
-                        bounds.left + h / 2f,
-                        bounds.top.toFloat() + cut,
-                        bounds.left + h / 2f,
-                        bounds.bottom.toFloat() - .1f * h,
-                        batteryPaint
-                    )
-                }
-
-                textClipBounds = if (complication.id % 2 == 1) {
+            if (complication.customDrawable(
+                    canvas,
+                    left,
+                    bounds.top.toFloat(),
+                    bottom,
+                    h.toFloat()
+                )
+            ) {
+                textClipBounds = if (complicationWrapper.id % 2 == 1) {
                     Rect(bounds.left, bounds.top, bounds.right - h, bounds.bottom)
                 } else {
                     Rect(bounds.left + h, bounds.top, bounds.right, bounds.bottom)
                 }
             } else if (drawable != null) {
-                var imagebounds = if (complication.id % 2 == 1) {
+                var imagebounds = if (complicationWrapper.id % 2 == 1) {
                     Rect(bounds.right - h, bounds.top, bounds.right, bounds.bottom)
                 } else {
                     Rect(bounds.left, bounds.top, bounds.left + h, bounds.bottom)
                 }
                 drawable.bounds = imagebounds
                 drawable.draw(canvas)
-                textClipBounds = if (complication.id % 2 == 1) {
+                textClipBounds = if (complicationWrapper.id % 2 == 1) {
                     Rect(bounds.left, bounds.top, bounds.right - h, bounds.bottom)
                 } else {
                     Rect(bounds.left + h, bounds.top, bounds.right, bounds.bottom)
                 }
             }
-            var textBounds = Rect()
-            var textPaint = getCompPaint(complication.id, renderParameters.drawMode)
+            val textBounds = Rect()
+            var textPaint = getCompPaint(complicationWrapper.id, renderParameters.drawMode)
             if (textAt.toString().length > 3) {
                 val size = textPaint.textSize * .8f
                 textPaint = Paint(textPaint).apply { textSize = size }
@@ -584,9 +480,9 @@ class DigitalWatchCanvasRenderer(
             textPaint.getTextBounds(
                 textAt.toString(), 0, textAt.toString().length, textBounds
             )
-            var v = h + h / 4
-            var y = bounds.bottom - h / 2 + textBounds.height() / 2
-            var x = if (complication.id % 2 == 1) {
+            val v = h + h / 4
+            val y = bounds.bottom - h / 2 + textBounds.height() / 2
+            val x = if (complicationWrapper.id % 2 == 1) {
                 bounds.right - v - textBounds.width()
             } else {
                 bounds.left + v
@@ -594,7 +490,7 @@ class DigitalWatchCanvasRenderer(
             canvas.save()
             canvas.clipRect(textClipBounds)
             canvas.drawText(
-                textAt.toString(), x.toFloat(), y.toFloat(), textPaint
+                textAt, x.toFloat(), y.toFloat(), textPaint
             )
             canvas.restore()
         }

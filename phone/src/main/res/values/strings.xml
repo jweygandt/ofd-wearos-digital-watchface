@@ -19,6 +19,7 @@
     <string name="take_photo">Take a Photo</string>
     <string name="send_photo">Send Photo</string>
     <string name="pause_music">Pause Music</string>
+    <string name="resume_music">Resume Music</string>
     <string name="photo_placeholder">Photo placeholder</string>
     <string name="captured_photo">Captured photo</string>
     <string name="data_item_changed">DataItem changed</string>

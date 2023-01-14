@@ -21,9 +21,13 @@ import android.util.Log
 import android.view.SurfaceHolder
 import androidx.wear.watchface.*
 import androidx.wear.watchface.complications.ComplicationSlotBounds
-import androidx.wear.watchface.style.*
+import androidx.wear.watchface.style.CurrentUserStyleRepository
+import androidx.wear.watchface.style.UserStyleSchema
+import androidx.wear.watchface.style.UserStyleSetting
+import androidx.wear.watchface.style.WatchFaceLayer
+import com.ofd.complications.ComplicationSlotManagerHolder
 import com.ofd.digital.alpha.location.WatchLocationService
-import com.ofd.digital.alpha.utils.COMPLICATION_12
+import com.ofd.digital.alpha.utils.COMPLICATION_14
 import com.ofd.digital.alpha.utils.COMPLICATION_2
 import com.ofd.digital.alpha.utils.createComplicationSlotManager
 
@@ -34,29 +38,31 @@ import com.ofd.digital.alpha.utils.createComplicationSlotManager
  */
 class DigitalWatchFaceService : WatchFaceService() {
 
+    lateinit var complicationSlotManagerHolder: ComplicationSlotManagerHolder
+
     // Creates all complication user settings and adds them to the existing user settings
     // repository.
     override fun createComplicationSlotsManager(
         currentUserStyleRepository: CurrentUserStyleRepository
-    ): ComplicationSlotsManager = createComplicationSlotManager(
-        context = applicationContext,
-        currentUserStyleRepository = currentUserStyleRepository
-    )
+    ): ComplicationSlotsManager {
+        complicationSlotManagerHolder = createComplicationSlotManager(
+            context = applicationContext,
+            currentUserStyleRepository = currentUserStyleRepository
+        )
+        return complicationSlotManagerHolder.slotManager
+    }
 
-    lateinit var optionDisable: UserStyleSetting.ComplicationSlotsUserStyleSetting
-    .ComplicationSlotsOption
-    lateinit var styleSetting : UserStyleSetting.ComplicationSlotsUserStyleSetting
 
     override fun createUserStyleSchema(): UserStyleSchema {
 
         val icon = Icon.createWithResource(applicationContext, R.drawable.ic_air_quality)
 
-        val c12overlay = UserStyleSetting.ComplicationSlotsUserStyleSetting
-            .ComplicationSlotOverlay.Builder(COMPLICATION_12).setEnabled(true)
-            .setComplicationSlotBounds(ComplicationSlotBounds(RectF(0f,0f,1f,1f))).build()
+        val c14enable = UserStyleSetting.ComplicationSlotsUserStyleSetting
+            .ComplicationSlotOverlay.Builder(COMPLICATION_14).setEnabled(true)
+            .setComplicationSlotBounds(ComplicationSlotBounds(RectF(0f, 0f, 1f, 1f))).build()
 
-        val slotOverlayEnable = UserStyleSetting.ComplicationSlotsUserStyleSetting
-            .ComplicationSlotOverlay.Builder(COMPLICATION_2).setEnabled(true).build()
+//        val slotOverlayEnable = UserStyleSetting.ComplicationSlotsUserStyleSetting
+//            .ComplicationSlotOverlay.Builder(COMPLICATION_2).setEnabled(true).build()
 
         val optionEnable = UserStyleSetting.ComplicationSlotsUserStyleSetting
             .ComplicationSlotsOption(
@@ -64,23 +70,27 @@ class DigitalWatchFaceService : WatchFaceService() {
                 applicationContext.resources,
                 R.string.blue_style_name,
                 icon,
-                listOf(slotOverlayEnable,c12overlay),
+                listOf(/*slotOverlayEnable,*/ c14enable),
                 null
             )
 
-        val slotOverlayDisable = UserStyleSetting.ComplicationSlotsUserStyleSetting
-            .ComplicationSlotOverlay.Builder(COMPLICATION_2).setEnabled(false).build()
+        val c14disable = UserStyleSetting.ComplicationSlotsUserStyleSetting
+            .ComplicationSlotOverlay.Builder(COMPLICATION_14).setEnabled(false)
+            .setComplicationSlotBounds(ComplicationSlotBounds(RectF(0f, 0f, 1f, 1f))).build()
 
-        optionDisable = UserStyleSetting.ComplicationSlotsUserStyleSetting
+//        val slotOverlayDisable = UserStyleSetting.ComplicationSlotsUserStyleSetting
+//            .ComplicationSlotOverlay.Builder(COMPLICATION_2).setEnabled(false).build()
+
+        val optionDisable = UserStyleSetting.ComplicationSlotsUserStyleSetting
             .ComplicationSlotsOption(
                 UserStyleSetting.Option.Id("optionDisable"),
                 applicationContext.resources,
                 R.string.blue_style_name,
                 icon,
-                listOf(slotOverlayDisable,c12overlay),
+                listOf(/*slotOverlayDisable,*/ c14disable),
                 null
             )
-        styleSetting = UserStyleSetting.ComplicationSlotsUserStyleSetting(
+        val styleSetting = UserStyleSetting.ComplicationSlotsUserStyleSetting(
             UserStyleSetting.Id("customStyle"),
             applicationContext.resources,
             R.string.app_name,
@@ -92,8 +102,8 @@ class DigitalWatchFaceService : WatchFaceService() {
             null
         )
 
-//        return UserStyleSchema(listOf(styleSetting))
-        return super.createUserStyleSchema()
+        return UserStyleSchema(listOf(styleSetting))
+//        return super.createUserStyleSchema()
     }
 
     override suspend fun createWatchFace(
@@ -111,7 +121,7 @@ class DigitalWatchFaceService : WatchFaceService() {
             context = applicationContext,
             surfaceHolder = surfaceHolder,
             watchState = watchState,
-            complicationSlotsManager = complicationSlotsManager,
+            complicationSlotManagerHolder = complicationSlotManagerHolder,
             currentUserStyleRepository = currentUserStyleRepository,
             canvasType = CanvasType.HARDWARE
         )
@@ -136,8 +146,18 @@ class DigitalWatchFaceService : WatchFaceService() {
         }
     }
 
+    override fun onCreate() {
+        super.onCreate()
+        Log.d(TAG, "onCreate()")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy()")
+    }
+
 
     companion object {
-        const val TAG = "OFDDigital"
+        const val TAG = "DigitalWatchFace"
     }
 }

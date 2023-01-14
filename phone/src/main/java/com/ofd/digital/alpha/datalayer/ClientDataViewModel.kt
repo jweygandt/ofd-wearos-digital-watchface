@@ -15,32 +15,28 @@
  */
 package com.ofd.digital.alpha.datalayer
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.ViewModel
-import com.google.android.gms.wearable.CapabilityClient
-import com.google.android.gms.wearable.CapabilityInfo
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.DataEvent
-import com.google.android.gms.wearable.DataEventBuffer
-import com.google.android.gms.wearable.MessageClient
-import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.*
 import com.ofd.digital.alpha.R
 
 /**
  * A state holder for the client data.
  */
-class ClientDataViewModel :
-    ViewModel(),
-    DataClient.OnDataChangedListener,
-    MessageClient.OnMessageReceivedListener,
-    CapabilityClient.OnCapabilityChangedListener {
+class ClientDataViewModel : ViewModel(), DataClient.OnDataChangedListener,
+    MessageClient.OnMessageReceivedListener, CapabilityClient.OnCapabilityChangedListener {
 
     private val _events = mutableStateListOf<Event>()
+
+    private val TAG = "ClientDataViewModel"
 
     /**
      * The list of events from the clients.
@@ -54,38 +50,57 @@ class ClientDataViewModel :
         private set
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
-        _events.addAll(
-            dataEvents.map { dataEvent ->
-                val title = when (dataEvent.type) {
-                    DataEvent.TYPE_CHANGED -> R.string.data_item_changed
-                    DataEvent.TYPE_DELETED -> R.string.data_item_deleted
-                    else -> R.string.data_item_unknown
-                }
-
-                Event(
-                    title = title,
-                    text = dataEvent.dataItem.toString()
-                )
+        _events.addAll(dataEvents.map { dataEvent ->
+            val title = when (dataEvent.type) {
+                DataEvent.TYPE_CHANGED -> R.string.data_item_changed
+                DataEvent.TYPE_DELETED -> R.string.data_item_deleted
+                else -> R.string.data_item_unknown
             }
-        )
+
+            Event(
+                title = title, text = dataEvent.dataItem.toString()
+            )
+        })
+        if (_events.size > 8) {
+            _events.removeRange(0, _events.size - 8)
+        }
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
+        Log.d(
+            TAG, "Msg: ${messageEvent.sourceNodeId}:${messageEvent.path}:${
+                messageEvent.data
+            }:${messageEvent.requestId}"
+        )
         _events.add(
             Event(
-                title = R.string.message_from_watch,
-                text = messageEvent.toString()
+                title = R.string.message_from_watch, text = messageEvent.toString()
             )
         )
+        val path = messageEvent.path
+        if(path.contains("stop"))
+            MainActivity.pauseMusic()
+        else if(path.contains("start"))
+            MainActivity.resumeMusic()
+        else if (path.contains("toggle"))
+            MainActivity.togglePlayback()
+
+        if (_events.size > 8) {
+            _events.removeRange(0, _events.size - 8)
+        }
+
     }
 
     override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {
         _events.add(
             Event(
-                title = R.string.capability_changed,
-                text = capabilityInfo.toString()
+                title = R.string.capability_changed, text = capabilityInfo.toString()
             )
         )
+        if (_events.size > 8) {
+            _events.removeRange(0, _events.size - 8)
+        }
+
     }
 
     fun onPictureTaken(bitmap: Bitmap?) {
@@ -97,6 +112,5 @@ class ClientDataViewModel :
  * A data holder describing a client event.
  */
 data class Event(
-    @StringRes val title: Int,
-    val text: String
+    @StringRes val title: Int, val text: String
 )

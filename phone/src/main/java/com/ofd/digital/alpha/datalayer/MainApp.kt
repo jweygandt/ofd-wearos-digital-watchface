@@ -42,11 +42,9 @@ import com.ofd.digital.alpha.R
 fun MainApp(
     events: List<Event>,
     image: Bitmap?,
-    isCameraSupported: Boolean,
-    onTakePhotoClick: () -> Unit,
-    onSendPhotoClick: () -> Unit,
     onStartWearableActivityClick: () -> Unit,
-    onPauseMusicClick: () -> Unit
+    onPauseMusicClick: () -> Unit,
+    onResumeMusicClick: () -> Unit,
 ) {
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
         item {
@@ -55,22 +53,14 @@ fun MainApp(
             ) {
                 Column(Modifier.weight(1f)) {
                     Button(
-                        onClick = onTakePhotoClick,
-                        enabled = isCameraSupported
-                    ) {
-                        Text(stringResource(id = R.string.take_photo))
-                    }
-                    Button(
-                        onClick = onSendPhotoClick,
-                        enabled = image != null
-                    ) {
-                        Text(stringResource(id = R.string.send_photo))
-                    }
-                    Button(
-                        onClick = onPauseMusicClick,
-                        enabled = true
+                        onClick = onPauseMusicClick, enabled = true
                     ) {
                         Text(stringResource(id = R.string.pause_music))
+                    }
+                    Button(
+                        onClick = onResumeMusicClick, enabled = true
+                    ) {
+                        Text(stringResource(id = R.string.resume_music))
                     }
                 }
 
@@ -85,11 +75,9 @@ fun MainApp(
                         )
                     } else {
                         Image(
-                            image.asImageBitmap(),
-                            contentDescription = stringResource(
+                            image.asImageBitmap(), contentDescription = stringResource(
                                 id = R.string.captured_photo
-                            ),
-                            modifier = Modifier.fillMaxSize()
+                            ), modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
@@ -105,12 +93,10 @@ fun MainApp(
         items(events) { event ->
             Column {
                 Text(
-                    stringResource(id = event.title),
-                    style = MaterialTheme.typography.subtitle1
+                    stringResource(id = event.title), style = MaterialTheme.typography.subtitle1
                 )
                 Text(
-                    event.text,
-                    style = MaterialTheme.typography.body2
+                    event.text, style = MaterialTheme.typography.body2
                 )
             }
             Divider()
@@ -121,38 +107,23 @@ fun MainApp(
 @Preview
 @Composable
 fun MainAppPreview() {
-    MainApp(
-        events = listOf(
-            Event(
-                title = R.string.data_item_changed,
-                text = "Event 1"
-            ),
-            Event(
-                title = R.string.data_item_deleted,
-                text = "Event 2"
-            ),
-            Event(
-                title = R.string.data_item_unknown,
-                text = "Event 3"
-            ),
-            Event(
-                title = R.string.message_from_watch,
-                text = "Event 4"
-            ),
-            Event(
-                title = R.string.data_item_changed,
-                text = "Event 5"
-            ),
-            Event(
-                title = R.string.data_item_deleted,
-                text = "Event 6"
-            )
-        ),
+    MainApp(events = listOf(
+        Event(
+            title = R.string.data_item_changed, text = "Event 1"
+        ), Event(
+            title = R.string.data_item_deleted, text = "Event 2"
+        ), Event(
+            title = R.string.data_item_unknown, text = "Event 3"
+        ), Event(
+            title = R.string.message_from_watch, text = "Event 4"
+        ), Event(
+            title = R.string.data_item_changed, text = "Event 5"
+        ), Event(
+            title = R.string.data_item_deleted, text = "Event 6"
+        )
+    ),
         image = null,
-        isCameraSupported = true,
-        onTakePhotoClick = {},
-        onSendPhotoClick = {},
         onStartWearableActivityClick = {},
-        onPauseMusicClick = {}
-    )
+        onPauseMusicClick = {},
+        onResumeMusicClick = {})
 }
