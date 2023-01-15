@@ -10,7 +10,7 @@ displayed when nothing else is running on the watch (e.g. media player, exercise
 main modes AMBIENT and INTERACTIVE. So while it displays date and time, it should also be a
 dashboard of information plus a primary interaction panel (e.g. app launcher).
 
-![Watch]./images/Watch.png Using the Moon Phase complication
+![Watch](./images/Watch.png) Using the Moon Phase complication
 from https://github.com/jweygandt/HonestHeartRateComplication would show a nice photo of the moon as
 the background, however I don't have permission to share the images, but the code is there less
 images.
