@@ -22,7 +22,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="227dp"
     android:layout_height="227dp"
-    tools:context=".editor.WatchFaceConfigActivity">
+    tools:context="com.ofd.watchface.digital12.editor.WatchFaceConfigActivity">
 
 
     <Button

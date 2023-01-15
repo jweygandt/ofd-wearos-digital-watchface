@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.alpha.editor
+package com.ofd.watchface.digital12.editor
 
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
-import com.ofd.digital.alpha.databinding.ActivityWatchFaceConfigBinding
+import com.ofd.watch.databinding.ActivityWatchFaceConfigBinding
 import com.ofd.ditital.alpha.editor.WatchFaceConfigStateHolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

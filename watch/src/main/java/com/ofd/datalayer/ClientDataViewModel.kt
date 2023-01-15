@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.alpha.datalayer
+package com.ofd.datalayer
 
 import android.app.Application
 import android.graphics.Bitmap
@@ -36,7 +36,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
-import com.ofd.digital.alpha.R
+import com.ofd.watch.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -140,7 +140,7 @@ class ClientDataViewModel(
     }
 
     companion object{
-        val TAG = "ClientDataViewModel"
+        const val TAG = "ClientDataViewModel"
     }
 }
 

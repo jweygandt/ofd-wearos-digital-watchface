@@ -20,18 +20,19 @@ import android.util.Log
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
-import com.ofd.digital.alpha.R
-import com.ofd.digital.alpha.location.WatchLocationService
+import com.ofd.watchface.location.WatchLocationService
 import com.ofd.openweather.OpenWeatherService
-import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.runBlocking
+import com.ofd.watch.R
 
+/**
+ * Not yet complete...
+ */
 class OpenWeather : ComplicationDataSourceService() {
 
 
     companion object {
         private const val TAG = "OpenWeather"
-        val uctr = AtomicInteger(0)
     }
 
     private var api: OpenWeatherService.OpenWeatherAPI? = null
@@ -73,7 +74,7 @@ class OpenWeather : ComplicationDataSourceService() {
         }
     }
 
-    fun updateComplication(
+    private fun updateComplication(
         complicationType: ComplicationType,
         listener: ComplicationRequestListener,
         aqi: OpenWeatherService.OWResult
@@ -103,7 +104,7 @@ class OpenWeather : ComplicationDataSourceService() {
                     .build()
 
                 else -> {
-                    Log.w(TAG, "Unexpected complication type ${complicationType}")
+                    Log.w(TAG, "Unexpected complication type $complicationType")
                     null
                 }
             }

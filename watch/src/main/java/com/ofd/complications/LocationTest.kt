@@ -15,27 +15,23 @@
  */
 package com.ofd.complications
 
-import android.content.ComponentName
-import android.content.Context
 import android.util.Log
 import androidx.wear.watchface.complications.data.*
-import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
-import com.ofd.digital.alpha.location.WatchLocationService
+import com.ofd.watchface.location.WatchLocationService
 import com.ofd.sunrisesunset.SunriseSunsetCalculator
 import com.ofd.sunrisesunset.dto.SSLocation
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
-
+/**
+ * To be used in position 5 for debugging
+ */
 class LocationTest : SuspendingComplicationDataSourceService() {
 
 
     companion object {
         private const val TAG = "CalendarService"
-
-        var uctr = AtomicInteger(0)
 
 
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.alpha.datalayer
+package com.ofd.datalayer
 
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -47,7 +47,7 @@ import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.material.items
 import androidx.wear.compose.material.rememberScalingLazyListState
-import com.ofd.digital.alpha.R
+import com.ofd.watch.R
 
 @OptIn(ExperimentalWearMaterialApi::class)
 @Composable

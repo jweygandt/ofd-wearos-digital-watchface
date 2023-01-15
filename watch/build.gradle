@@ -23,7 +23,7 @@ android {
     compileSdkVersion 33
 
     defaultConfig {
-        applicationId "com.ofd.digital.alpha"
+        applicationId "com.ofd.watch"
         minSdk 28
         targetSdk 32
         versionCode 1

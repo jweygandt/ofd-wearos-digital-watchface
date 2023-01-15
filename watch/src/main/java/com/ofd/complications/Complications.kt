@@ -3,7 +3,13 @@ package com.ofd.complications
 import android.content.Context
 import android.util.Log
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
+import com.ofd.watchface.vcomp.ComplicationSlotManagerHolder
 
+/**
+ * After a location update, this will force all location aware complications an upate.
+ *
+ * TODO - is there a better way?
+ */
 class Complications {
 
     companion object {
@@ -20,7 +26,7 @@ class Complications {
                     Log.d(
                         TAG, "Complication: " + cs.key + ": " + dataSource.toString()
                     )
-                    if (dataSource.packageName.equals("com.ofd.digital.alpha")) {
+                    if (dataSource.packageName.equals("com.ofd.complications")) {
                         Log.d(TAG, "updating " + dataSource.toString())
                         ComplicationDataSourceUpdateRequester.create(
                             applicationContext, dataSource

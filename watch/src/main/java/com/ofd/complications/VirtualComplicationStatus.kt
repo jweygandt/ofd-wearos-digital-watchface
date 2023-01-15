@@ -21,15 +21,20 @@ import android.util.Log
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
-import com.ofd.digital.alpha.OFD
+import com.ofd.watchface.digital12.D12
+import com.ofd.watchface.vcomp.VirtualComplication
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * This is a better, more dynamic version of ComplicationStats, to be used for debugging in
+ * position 5.
+ */
 class VirtualComplicationStatusImpl : VirtualComplication {
     override val type: ComplicationType
         get() = ComplicationType.LONG_TEXT
     override val image: Icon? get() = null
     override val text: String
-        get() = OFD.status.get() ?: "Not yet set"
+        get() = D12.status.get() ?: "Not yet set"
     override val rangeValue: Float
         get() = 0f
     override val rangeMin: Float
@@ -84,7 +89,7 @@ class VirtualComplicationStatus : ComplicationDataSourceService() {
         request: ComplicationRequest,
         listener: ComplicationRequestListener
     ) {
-        val msg = OFD.status.get() ?: "Not yet set"
+        val msg = D12.status.get() ?: "Not yet set"
         val data = when (request.complicationType) {
 
             ComplicationType.SHORT_TEXT -> ShortTextComplicationData.Builder(

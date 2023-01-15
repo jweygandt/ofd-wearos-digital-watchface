@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.alpha.datalayer
+package com.ofd.digital.watchface.datalayer
 
 import android.content.Context
 import android.media.AudioAttributes
@@ -61,8 +61,6 @@ class MainActivity : ComponentActivity() {
         mAudioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         clientDataViewModel = ClientDataViewModel()
 
-        var count = 0
-
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
 //                // Set the initial trigger such that the first count will happen in one second.
@@ -106,13 +104,6 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    override fun onPause() {
-        super.onPause()
-//        dataClient.removeListener(clientDataViewModel)
-//        messageClient.removeListener(clientDataViewModel)
-//        capabilityClient.removeListener(clientDataViewModel)
-    }
-
     private fun startWearableActivity() {
         lifecycleScope.launch {
             try {
@@ -121,7 +112,7 @@ class MainActivity : ComponentActivity() {
                     .await()
 
                 Log.d(TAG, "Found caps: " + caps.keys.toString())
-                val nodes = caps.get(WEAR_CAPABILITY)?.nodes ?: emptyList()
+                val nodes = caps[WEAR_CAPABILITY]?.nodes ?: emptyList()
 
                 Log.d(TAG, "Found nodes: " + nodes.size)
 
@@ -150,12 +141,10 @@ class MainActivity : ComponentActivity() {
         private const val TAG = "MainActivity"
 
         private const val START_ACTIVITY_PATH = "/start-activity"
-        private const val COUNT_PATH = "/count"
-        private const val COUNT_KEY = "count"
         private const val WEAR_CAPABILITY = "wear"
 
         var mAudioManager: AudioManager? = null
-        var mFocusRequest: AudioFocusRequest? = null
+        private var mFocusRequest: AudioFocusRequest? = null
 
         fun togglePlayback() {
             if(mFocusRequest==null)
@@ -188,13 +177,16 @@ class MainActivity : ComponentActivity() {
 //                        .setWillPauseWhenDucked(true)
 //                        .setOnAudioFocusChangeListener(this, Handler(){d -> })
                 .build()
-            val res = mAudioManager!!.requestAudioFocus(mFocusRequest!!)
-            if (res == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
-                Log.d(TAG, "Failed")
-            } else if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                Log.d(TAG, "OK")
-            } else if (res == AudioManager.AUDIOFOCUS_REQUEST_DELAYED) {
-                Log.d(TAG, "Delayed")
+            when (mAudioManager!!.requestAudioFocus(mFocusRequest!!)) {
+                AudioManager.AUDIOFOCUS_REQUEST_FAILED -> {
+                    Log.d(TAG, "Failed")
+                }
+                AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
+                    Log.d(TAG, "OK")
+                }
+                AudioManager.AUDIOFOCUS_REQUEST_DELAYED -> {
+                    Log.d(TAG, "Delayed")
+                }
             }
         }
     }

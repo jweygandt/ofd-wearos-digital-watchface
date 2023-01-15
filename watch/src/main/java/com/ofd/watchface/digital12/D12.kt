@@ -1,12 +1,15 @@
-package com.ofd.digital.alpha
+package com.ofd.watchface.digital12
 
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.wear.watchface.DrawMode
-import com.ofd.digital.alpha.utils.*
+import com.ofd.complications.*
 import java.util.concurrent.atomic.AtomicReference
 
-class OFD {
+/**
+ * This class holds some metrics used to determine watch face layout as well as custom paints.
+ */
+class D12 {
     companion object {
         val status = AtomicReference<String>(null)
 
@@ -57,13 +60,13 @@ class OFD {
         const val c1C6GapP = C12GapP / 4f
 
         // c6,c7 gap (see #3)
-        const val g67 = C12GapP * 1.5f
+//        const val g67 = C12GapP * 1.5f
 
-        const val startAngle = -25f
+        private const val startAngle = -25f
         const val sweepAngle = 40f
 
-        const val arcStroke = 34f
-        const val arcText = 32f
+        private const val arcStroke = 34f
+        private const val arcText = 32f
 
         // The arc sweeps up, text sweepsa down
         const val c10startAngle = startAngle + sweepAngle
@@ -106,10 +109,10 @@ class OFD {
             color = Color.BLACK
         }
 
-        private val cts = 35f
-        private val ctss = cts * .75f
+        private const val cts = 35f
+        private const val ctss = cts * .75f
 
-        val iconPaint = mapOf(
+        private val iconPaint = mapOf(
             DrawMode.INTERACTIVE to Paint().apply {
                 isAntiAlias = true
                 textSize = cts
@@ -123,7 +126,7 @@ class OFD {
                 color = 0xFFA0A0FF.toInt() / 2 and 0xFF7F7F7F.toInt()
             })
 
-        val c11paint = Paint().apply {
+        private val c11paint = Paint().apply {
             isAntiAlias = true
             textSize = ctss
             isFakeBoldText = true

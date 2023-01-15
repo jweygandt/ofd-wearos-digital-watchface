@@ -15,7 +15,7 @@
   limitations under the License.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ofd.digital.alpha">
+    package="com.ofd.watch">
 
     <!-- Required for complications to receive complication data and open the provider chooser. -->
     <uses-feature android:name="android.hardware.type.watch" />
@@ -52,7 +52,7 @@
             android:value="@integer/google_play_services_version" />
 
         <service
-            android:name=".DigitalWatchFaceService"
+            android:name="com.ofd.watchface.digital12.DigitalWatchFaceService"
             android:directBootAware="true"
             android:exported="true"
             android:label="@string/digital_watch_face_name"
@@ -81,7 +81,7 @@
         </service>
 
         <activity
-            android:name=".editor.WatchFaceConfigActivity"
+            android:name="com.ofd.watchface.digital12.editor.WatchFaceConfigActivity"
             android:exported="true"
             android:label="@string/title_activity_watch_face_config">
 
@@ -93,7 +93,7 @@
         </activity>
 
         <activity
-            android:name=".WhereAmIActivity"
+            android:name="com.ofd.watchface.location.WhereAmIActivity"
             android:label="Where Am I"
             android:exported="true">
             <intent-filter>
@@ -256,7 +256,7 @@
         </service>
 
         <service
-            android:name=".datalayer.DataLayerListenerService"
+            android:name="com.ofd.datalayer.DataLayerListenerService"
             android:exported="true">
             <intent-filter>
                 <!-- listeners receive events that match the action and data filters -->
@@ -276,7 +276,7 @@
         </service>
 
         <activity
-            android:name=".datalayer.MainActivity"
+            android:name="com.ofd.datalayer.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

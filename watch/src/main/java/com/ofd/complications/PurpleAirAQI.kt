@@ -22,17 +22,15 @@ import androidx.wear.watchface.complications.datasource.ComplicationDataSourceSe
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import com.odbol.wear.airquality.purpleair.AirQualitySearch
 import com.odbol.wear.airquality.purpleair.PurpleAir
-import com.ofd.digital.alpha.R
-import com.ofd.digital.alpha.location.WatchLocationService
+import com.ofd.watchface.location.WatchLocationService
 import io.reactivex.disposables.CompositeDisposable
-import java.util.concurrent.atomic.AtomicInteger
+import com.ofd.watch.R
 
 class PurpleAirAQI : ComplicationDataSourceService() {
 
 
     companion object {
         private const val TAG = "AirQuality"
-        val uctr = AtomicInteger(0)
 
         val airQualitySearch = AirQualitySearch()
     }
@@ -69,7 +67,6 @@ class PurpleAirAQI : ComplicationDataSourceService() {
         if (wl.valid) {
             airQualitySearch.getAirQualitityData(
                 PurpleAir(applicationContext),
-                subscriptions,
                 wl.location.location!!
             ) { aqd -> updateComplication(request.complicationType, listener, aqd) }
         } else {
@@ -80,7 +77,7 @@ class PurpleAirAQI : ComplicationDataSourceService() {
         }
     }
 
-    fun updateComplication(
+    private fun updateComplication(
         complicationType: ComplicationType,
         listener: ComplicationRequestListener,
         aqd: AirQualitySearch.Companion.AirQualityData
@@ -147,7 +144,7 @@ class PurpleAirAQI : ComplicationDataSourceService() {
 
             }
             else -> {
-                Log.w(TAG, "Unexpected complication type ${complicationType}")
+                Log.w(TAG, "Unexpected complication type $complicationType")
                 null
             }
         }

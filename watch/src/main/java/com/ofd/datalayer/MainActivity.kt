@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.alpha.datalayer
+package com.ofd.datalayer
 
 import android.net.Uri
 import android.os.Bundle
@@ -26,7 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.Wearable
-import com.ofd.digital.alpha.R
+import com.ofd.watch.R
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
             // Pair the list of all reachable nodes with their capabilities
             .flatMap { (capability, capabilityInfo) ->
                 Log.d(TAG, "Capability: " + capability + ":")
-                capabilityInfo.nodes.forEach(){n -> Log.d(TAG, "  " + n.displayName)}
+                capabilityInfo.nodes.forEach { n -> Log.d(TAG, "  " + n.displayName)}
                 capabilityInfo.nodes.map { it to capability }
             }
             // Group the pairs by the nodes

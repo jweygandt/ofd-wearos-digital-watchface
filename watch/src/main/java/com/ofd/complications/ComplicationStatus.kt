@@ -20,21 +20,17 @@ import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
 import com.odbol.wear.airquality.purpleair.AirQualitySearch
-import com.ofd.digital.alpha.OFD
-import com.ofd.digital.alpha.location.WatchLocationService
+import com.ofd.watchface.location.WatchLocationService
 import com.ofd.openweather.OpenWeatherAQIService
-import com.ofd.sunrisesunset.SunriseSunsetCalculator
-import com.ofd.sunrisesunset.dto.SSLocation
-import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * When used in position 5 you can display debugging messages on the Watch Face
+ */
 class ComplicationStatus : SuspendingComplicationDataSourceService() {
 
 
     companion object {
         private const val TAG = "ComplicationStatus"
-
-        var uctr = AtomicInteger(0)
 
 
     }
@@ -64,14 +60,6 @@ class ComplicationStatus : SuspendingComplicationDataSourceService() {
         Log.d(TAG, "onComplicationRequest() id: ${request.complicationInstanceId}")
 
         val wl = WatchLocationService.getLocation()
-        val ssc = SunriseSunsetCalculator(
-            SSLocation(
-                wl.latitude.toString(),
-                wl.longitude.toString()
-            ), TimeZone.getDefault()
-        )
-        val sunrise = ssc.getCivilSunriseForDate(Calendar.getInstance())
-        val sunset = ssc.getCivilSunsetForDate(Calendar.getInstance())
         val msg = wl.getShortAddress() + ":" +
             wl.callcnt.toString() + ":" + wl.successcnt.toString() + "\n" +
             AirQualitySearch.lastQueryData.aqi().toInt().toString() + ":" +

@@ -20,21 +20,18 @@ import android.util.Log
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
-import com.odbol.wear.airquality.purpleair.AirQualitySearch
-import com.ofd.digital.alpha.R
-import com.ofd.digital.alpha.location.WatchLocationService
+import com.ofd.watchface.location.WatchLocationService
 import com.ofd.openweather.OpenWeatherAQIService
-import java.util.concurrent.atomic.AtomicInteger
+import com.ofd.watch.R
 
 class OpenWeatherAQI : ComplicationDataSourceService() {
 
 
     companion object {
         private const val TAG = "OpenWeatherAQI"
-        val uctr = AtomicInteger(0)
     }
 
-    private var api: com.ofd.openweather.OpenWeatherAQIService.OpenWeatherAQIAPI? = null
+    private var api: OpenWeatherAQIService.OpenWeatherAQIAPI? = null
 
     override fun onComplicationActivated(
         complicationInstanceId: Int, type: ComplicationType
@@ -73,7 +70,7 @@ class OpenWeatherAQI : ComplicationDataSourceService() {
         }
     }
 
-    fun updateComplication(
+    private fun updateComplication(
         complicationType: ComplicationType,
         listener: ComplicationRequestListener,
         aqi: OpenWeatherAQIService.OWAQIResult
@@ -140,7 +137,7 @@ class OpenWeatherAQI : ComplicationDataSourceService() {
 
             }
             else -> {
-                Log.w(TAG, "Unexpected complication type ${complicationType}")
+                Log.w(TAG, "Unexpected complication type $complicationType")
                 null
             }
         }

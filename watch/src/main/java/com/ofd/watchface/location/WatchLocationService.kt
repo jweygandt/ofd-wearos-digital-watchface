@@ -1,12 +1,11 @@
-package com.ofd.digital.alpha.location
+package com.ofd.watchface.location
 
 import android.content.Context
 import android.util.Log
 import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.RenderParameters
-import com.ofd.complications.ComplicationSlotManagerHolder
+import com.ofd.watchface.vcomp.ComplicationSlotManagerHolder
 import com.ofd.complications.Complications
-import com.ofd.digital.alpha.WhereAmIActivity
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -19,6 +18,13 @@ import kotlinx.coroutines.launch
  * I have found that location services in complications are iffy (on Galaxy Watch 5), so doing
  * it during the render call seems to be more reliable, and then simply keeping the results
  * in a static location.
+ *
+ * Since all is in static, simply in render calls, done frequently...
+ *
+ * WatchLocationService.doOnRender(...)
+ *
+ * Location will be pulled infrequently and Complications.forceComplicationUpdate(...) will be
+ * called.
  */
 class WatchLocationService {
 

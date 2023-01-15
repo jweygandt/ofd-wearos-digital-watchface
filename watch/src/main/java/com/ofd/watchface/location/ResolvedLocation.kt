@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package com.ofd.digital.alpha.location
+package com.ofd.watchface.location
 
 import android.location.Location
 import android.text.format.DateUtils

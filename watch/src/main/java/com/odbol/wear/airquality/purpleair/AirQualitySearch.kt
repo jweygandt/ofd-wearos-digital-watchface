@@ -5,11 +5,12 @@ import android.util.Log
 import com.thanglequoc.aqicalculator.AQICalculator
 import com.thanglequoc.aqicalculator.AQIResult
 import com.thanglequoc.aqicalculator.Pollutant
-import io.reactivex.disposables.CompositeDisposable
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
+import kotlin.math.abs
+import kotlin.math.min
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -36,7 +37,7 @@ class AirQualitySearch {
     // than minPeriodMs
 
     companion object {
-        val TAG = "AirQualitySearch"
+        const val TAG = "AirQualitySearch"
         private const val initialFenceMiles = 1.0f
         private const val incrementalScale = 1.4f
         private const val maximumFenceMiles = 50f
@@ -44,10 +45,8 @@ class AirQualitySearch {
         private const val maximumSensors = 30
         private const val minLocationMovementMiles = 1.0f
         val valueRetentionMs = TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)
-        val minPeriodMs = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES)
 
         private const val metersInMile = 1609.344
-        private const val milesForDegree = 69.172
 
         val callInProgress = AtomicBoolean(false)
 
@@ -73,10 +72,10 @@ class AirQualitySearch {
 
             private val pm25: Double
             val hasRealData: Boolean
-            val sortedSensors: List<Sensor>
+            private val sortedSensors: List<Sensor>
 
             init {
-                if (sensors.size > 0) {
+                if (sensors.isNotEmpty()) {
                     metricLastResultSize.set(sensors.size)
                     val s0 = sensors.sortedWith(sortByClosest(lastLocation!!))
                     sortedSensors = if (s0.size > maximumSensors) s0.subList(0, maximumSensors - 1)
@@ -85,7 +84,7 @@ class AirQualitySearch {
                     sortedSensors.forEach { s -> pm25s.add(s.pm25) }
                     pm25s.sort()
                     val inx = (pm25s.size / 2f + .5f).toInt()
-                    pm25 = pm25s.get(Math.min(inx, pm25s.size - 1))
+                    pm25 = pm25s[min(inx, pm25s.size - 1)]
                     hasRealData = true
 
                 } else {
@@ -108,7 +107,6 @@ class AirQualitySearch {
 
     fun getAirQualitityData(
         purple: PurpleAir,
-        subscriptions: CompositeDisposable,
         location: Location,
         callback: Consumer<AirQualityData>
     ) {
@@ -132,7 +130,7 @@ class AirQualitySearch {
 
         // If we have moved more than minLocationMovementMiles
         // reset the fence
-        if ((lastLocation == null) || (Math.abs(location.distanceTo(lastLocation!!) / metersInMile) > minLocationMovementMiles)) {
+        if ((lastLocation == null) || (abs(location.distanceTo(lastLocation!!) / metersInMile) > minLocationMovementMiles)) {
             currentFenceMiles = initialFenceMiles
             lastLocation = location
         }
@@ -180,7 +178,7 @@ class AirQualitySearch {
                             }
                         }
                     } else {
-                        Log.w(TAG, "Issue with purple air, empty body: " + response.toString())
+                        Log.w(TAG, "Issue with purple air, empty body: $response")
                         lastQueryTimeMs = now
                         lastQueryData = AirQualityData(emptyList())
                         metricNumErrors.incrementAndGet()

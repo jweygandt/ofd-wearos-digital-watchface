@@ -22,7 +22,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="@dimen/analog_complication_settings_preview_size"
     android:layout_height="@dimen/analog_complication_settings_preview_size"
-    tools:context=".editor.WatchFaceConfigActivity">
+    tools:context="com.ofd.watchface.digital12.editor.WatchFaceConfigActivity">
 
 
     <ImageView

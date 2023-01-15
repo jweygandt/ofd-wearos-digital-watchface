@@ -24,7 +24,7 @@ android {
 
     defaultConfig {
         // NOTE: This must be the same in the phone app and the wear app for the capabilities API
-        applicationId "com.ofd.digital.alpha"
+        applicationId "com.ofd.watch"
         versionCode 1
         versionName "1.0"
         minSdk 26

@@ -12,7 +12,7 @@ const val PREFS_KEY_DOWNLOAD_ID = "PREFS_KEY_DOWNLOAD_ID"
 
 class DownloadManagerRx(context: Context) {
     companion object{
-        val TAG = "DownloadManagerRx"
+        const val TAG = "DownloadManagerRx"
     }
     private val downloadManager = context.getSystemService(DOWNLOAD_SERVICE) as DownloadManager
 
@@ -50,8 +50,7 @@ class DownloadManagerRx(context: Context) {
     fun getProgress(): Double {
         val cursor: Cursor = downloadManager.query(DownloadManager.Query().setFilterById(downloadId))
         if (cursor.moveToFirst()) {
-            val status: Int = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
-            when (status) {
+            when (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
                 DownloadManager.STATUS_FAILED -> {
                     return -1.0
                 }

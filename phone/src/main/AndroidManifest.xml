@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ofd.digital.alpha">
+    package="com.ofd.watch">
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -32,7 +32,7 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name=".datalayer.MainActivity"
+            android:name="com.ofd.digital.com.ofd.watchface.datalayer.MainActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar">
             <intent-filter>

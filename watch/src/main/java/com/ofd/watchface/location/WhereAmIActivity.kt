@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package com.ofd.digital.alpha
+package com.ofd.watchface.location
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -26,11 +26,13 @@ import androidx.lifecycle.lifecycleScope
 import com.fondesa.kpermissions.allGranted
 import com.fondesa.kpermissions.coroutines.sendSuspend
 import com.fondesa.kpermissions.extension.permissionsBuilder
-import com.ofd.digital.alpha.location.LocationViewModel
-import com.ofd.digital.alpha.location.ResolvedLocation
+import com.ofd.watch.R
 import java.util.*
 import kotlinx.coroutines.launch
 
+/**
+ * Copy/Paste code, generally not fully used in Watch
+ */
 class WhereAmIActivity : FragmentActivity() {
     private lateinit var locationViewModel: LocationViewModel
 

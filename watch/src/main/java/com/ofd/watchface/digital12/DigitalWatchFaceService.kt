@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.alpha
+package com.ofd.watchface.digital12
 
 import android.graphics.RectF
 import android.graphics.drawable.Icon
@@ -25,11 +25,9 @@ import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyleSchema
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
-import com.ofd.complications.ComplicationSlotManagerHolder
-import com.ofd.digital.alpha.location.WatchLocationService
-import com.ofd.digital.alpha.utils.COMPLICATION_14
-import com.ofd.digital.alpha.utils.COMPLICATION_2
-import com.ofd.digital.alpha.utils.createComplicationSlotManager
+import com.ofd.watchface.vcomp.ComplicationSlotManagerHolder
+import com.ofd.watchface.location.WatchLocationService
+import com.ofd.watch.R
 
 /**
  * Handles much of the boilerplate needed to implement a watch face (minus rendering code; see
@@ -38,7 +36,7 @@ import com.ofd.digital.alpha.utils.createComplicationSlotManager
  */
 class DigitalWatchFaceService : WatchFaceService() {
 
-    lateinit var complicationSlotManagerHolder: ComplicationSlotManagerHolder
+    private lateinit var complicationSlotManagerHolder: ComplicationSlotManagerHolder
 
     // Creates all complication user settings and adds them to the existing user settings
     // repository.
@@ -130,10 +128,10 @@ class DigitalWatchFaceService : WatchFaceService() {
         return WatchFace(
             watchFaceType = WatchFaceType.DIGITAL,
             renderer = renderer
-        ).setTapListener(wflistener)
+        ).setTapListener(WFlistener)
     }
 
-    object wflistener : WatchFace.TapListener {
+    object WFlistener : WatchFace.TapListener {
         override fun onTapEvent(
             tapType: Int,
             tapEvent: TapEvent,

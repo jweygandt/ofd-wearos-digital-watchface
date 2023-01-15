@@ -4,7 +4,7 @@ import android.content.Context
 import android.location.Location
 import android.util.Log
 import com.google.gson.*
-import com.ofd.digital.alpha.R
+import com.ofd.watch.R
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean

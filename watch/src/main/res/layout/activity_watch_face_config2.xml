@@ -25,7 +25,7 @@
     android:paddingTop="@dimen/activity_config_padding"
     android:paddingEnd="@dimen/activity_config_padding"
     android:paddingBottom="@dimen/activity_config_padding"
-    tools:context=".editor.WatchFaceConfigActivity"
+    tools:context="com.ofd.watchface.digital12.editor.WatchFaceConfigActivity"
     tools:deviceIds="wear">
 
     <androidx.constraintlayout.widget.ConstraintLayout

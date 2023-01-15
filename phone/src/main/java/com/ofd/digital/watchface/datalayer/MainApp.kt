@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.alpha.datalayer
+package com.ofd.digital.watchface.datalayer
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
@@ -32,7 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ofd.digital.alpha.R
+import com.ofd.watch.R
 
 /**
  * The UI affording the actions the user can take, along with a list of the events and the image

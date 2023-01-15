@@ -1,7 +1,7 @@
 package com.odbol.wear.airquality.purpleair
 
 import android.content.Context
-import com.ofd.digital.alpha.R
+import com.ofd.watch.R
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -28,7 +28,7 @@ class CachingClient(private val context: Context) {
                     var request = chain.request()
 
                     val pathSegments = request.url().encodedPathSegments()
-                    var isIndividualSensorRequest = !(pathSegments.size > 1 && pathSegments[pathSegments.size - 1] == "sensors")
+                    val isIndividualSensorRequest = !(pathSegments.size > 1 && pathSegments[pathSegments.size - 1] == "sensors")
 
 
                     /*

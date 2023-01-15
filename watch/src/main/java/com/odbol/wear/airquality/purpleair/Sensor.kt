@@ -27,14 +27,13 @@ data class Sensor(
                   val lastSeenSeconds: Long?,
                   val pm25Override: Double?) {
 
-    var isSelected = false
     var distanceMeters = 0.0f
 
     // WARNING: you can't use init here. for some reason gson can get around calling it. WTF Kotlin
     // see https://stackoverflow.com/a/54769068/473201
-    init {
-
-    }
+//    init {
+//
+//    }
 
     val pm25: Double
         get() = stats?.avg10Min ?: pm25Override ?: 0.0

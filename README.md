@@ -12,8 +12,15 @@ dashboard of information plus a primary interaction panel (e.g. app launcher).
 
 So with that in mind, I'm breaking some rules and hacking away...
 
-At the moment the code is really hacked - very much so!, and will be cleaned up considerably later,
-but I'm feeling a need to push the changes to the cloud.
+# Recent Changes
+
+1/15/22 Did a big cleanup and refactor, even changed the application id. It looks better than the
+1/14 code, IT COMPILES, BUT HAS NOT BEEN TESTED, so likely will have some bugs.
+
+1/14/22 At the moment the code is really hacked - very much so!, and will be cleaned up considerably
+later, but I'm feeling a need to push the changes to the cloud.
+
+# Play/Pause
 
 A really big feature being added is the ability to pause/resume music with different methods.
 Imagine listening to Spotify, on a ski slope, mittens on. You really cannot navigate to Spotify, if
@@ -26,6 +33,12 @@ run spotify the app, and use buttons to bring up watch face, and (customised) do
 last app. Pause/resume by the button push. I should note it needs the phone app installed on the
 phone, and it need to be started, but not necessarlly visible
 (actually that is a big hack right now as well)
+
+# Virtual Complications
+
+In the sense of location aware complications (described below), battery and the play/pause are
+special as well. So I have created my own version of Virtual Complications (VComps). Still a work in
+progress.
 
 # Goals:
 
@@ -45,11 +58,12 @@ phone, and it need to be started, but not necessarlly visible
   * 1 large full image background
     * Photo images of the moon phase
 
-* Currently this is for an audience of 1, so many shortcuts if others are interested, I'm interested
-  in hearing from them.
+* Currently this is for an audience of 1, so many shortcuts, if others are interested, I'm
+  interested in hearing from them.
 
 NOTE - this is still a HACK and WORK IN PROGRESS, but you are welcome to look at, copy, and perhaps
-suggest changes. I do use the watch face daily.
+suggest changes. I do use the watch face daily. I have not given much thought to the previews and
+various app/complication icons in editor mode, as I only use that briefly.
 
 I noticed that images, called monochromatic... are really in full color, and that color could be
 supported. So why not.
@@ -73,12 +87,20 @@ Eventually I'd like to do a weather complication that uses location all the time
 report to 3rd parties. There is also some long text complications for testing.
 
 Also I decided to have some fun with rendering the range complications, by providing some URL like
-parameters, see the AQI complications.
+parameters, see the AQI complications. TODO - I should actually pull these parameters out into first
+class VirtualComplication arguments of sorts.
 
 Thanks to:
 
 * https://github.com/odbol/air-quality-complication
 * https://github.com/google/where-am-i
+* https://github.com/SebastianSarbu/PizzaWatchFace - for going down the path of "lots of
+  complications"
+* https://github.com/VladimirWrites/AnalogWatchFace - for simply having some additional open source
+  samples of wear-os
+* Of course google and wear-os and samples
+* Less to Samsung for doing thier own version of Virtual Complications, although I'm sure they
+  partnered with Google for wear-os, and of course the hardware
 
 So still lots to do, but I'm making it public as there are so few wear os open source projects so
 far.

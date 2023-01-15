@@ -6,8 +6,16 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.Icon
 import androidx.wear.watchface.ComplicationSlot
+import com.ofd.watchface.vcomp.StandardComplication
 import java.time.Instant
 
+/**
+ * Why did wearos only do "monochromatic" and likely "static" images? Let's be dynamic. Already did
+ * for Heartbeat complication (another of my GitHub projects), so this simply overrides the
+ * "icon" part of the existing battery complication.
+ *
+ * BTW use this in positions 1-4, the SHORT_TEXT positions
+ */
 class VirtualBatteryComplicationImpl(
     slot: ComplicationSlot,
     resources: Resources,
