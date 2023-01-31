@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.drawable.Icon
 import androidx.wear.watchface.ComplicationSlot
 import com.ofd.watchface.vcomp.StandardComplication
+import com.ofd.watchface.vcomp.VirtualComplicationWatchRenderSupport
 import java.time.Instant
 
 /**
@@ -18,10 +19,10 @@ import java.time.Instant
  */
 class VirtualBatteryComplicationImpl(
     slot: ComplicationSlot,
-    resources: Resources,
+    watch: VirtualComplicationWatchRenderSupport,
     instant: Instant?
 ) :
-    StandardComplication(slot, resources, instant) {
+    StandardComplication(slot, watch, instant) {
     override val image: Icon? get() = null
 
     override fun customDrawable(

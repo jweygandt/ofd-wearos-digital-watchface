@@ -18,19 +18,3 @@ interface VirtualComplicationWatchRenderSupport {
     abstract val currentUserStyleRepository : CurrentUserStyleRepository?
 }
 
-/**
- * TODO let's figure out a better method, but for now when used in VComp construction they will
- * not be needed for the functionality, it avoids allowing null values
- */
-class NullVCompSupport : VirtualComplicationWatchRenderSupport {
-    override val messageClient: MessageClient
-        get() = TODO("Not yet implemented")
-    override val capabilityClient: CapabilityClient
-        get() = TODO("Not yet implemented")
-    override val scope: CoroutineScope
-        get() = TODO("Not yet implemented")
-    override val context: Context
-        get() = TODO("Not yet implemented")
-    override val currentUserStyleRepository: CurrentUserStyleRepository?
-        get() = TODO("Not yet implemented")
-}

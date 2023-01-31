@@ -25,20 +25,18 @@ import androidx.wear.watchface.style.UserStyle
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Node
-import com.ofd.watchface.digital12.DigitalWatchCanvasRenderer
-import com.ofd.watchface.digital12.D12
-import java.util.concurrent.CancellationException
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.tasks.await
 import com.ofd.watch.R
+import com.ofd.watchface.digital12.D12
+import com.ofd.watchface.digital12.DigitalWatchCanvasRenderer
 import com.ofd.watchface.vcomp.VirtualComplication
 import com.ofd.watchface.vcomp.VirtualComplicationWatchRenderSupport
-
-enum class PlayPauseMode { STOP, PLAY, PAUSE }
+import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.tasks.await
 
 private val tapCount = AtomicInteger(0)
-val playPauseMode = AtomicReference(PlayPauseMode.STOP)
+val playPauseEnabled = AtomicBoolean(false)
 
 private const val TAG = "VirtualComplicationPlayPause"
 
@@ -55,18 +53,16 @@ class VirtualComplicationPlayPauseImpl(
     override val type: ComplicationType
         get() = ComplicationType.SMALL_IMAGE
 
-    override val image: Icon?
+    override val image: Icon
         get() {
             return Icon.createWithResource(
                 watch.context, getIconFromPlayMode()
             )
         }
 
-    private fun getIconFromPlayMode() = when (playPauseMode.get()) {
-        PlayPauseMode.STOP -> R.drawable.ic_baseline_stop_circle_24
-        PlayPauseMode.PLAY -> R.drawable.ic_baseline_play_circle_filled_24
-        PlayPauseMode.PAUSE -> R.drawable.ic_baseline_pause_circle_filled_24
-    }
+    private fun getIconFromPlayMode() =
+        if (playPauseEnabled.get()) R.drawable.ic_play_pause_active
+        else R.drawable.ic_play_pause_disabled
 
     override val text: String
         get() = D12.status.get() ?: "Not yet set"
@@ -81,20 +77,16 @@ class VirtualComplicationPlayPauseImpl(
         canvas: Canvas, bleft: Float, btop: Float, bbottom: Float, sqsize: Float
     ): Boolean = false
 
-    override val tapCallback: Runnable?
+    override val tapCallback: Runnable
         get() = Runnable {
             val cnt = tapCount.incrementAndGet()
-            when (cnt % 3) {
+            when (cnt % 2) {
                 0 -> {
-                    playPauseMode.set(PlayPauseMode.STOP)
+                    playPauseEnabled.set(false)
                     setEnable(false)
                 }
                 1 -> {
-                    playPauseMode.set(PlayPauseMode.PLAY)
-                    setEnable(true)
-                }
-                2 -> {
-                    playPauseMode.set(PlayPauseMode.PAUSE)
+                    playPauseEnabled.set(true)
                     setEnable(true)
                 }
             }
@@ -102,9 +94,9 @@ class VirtualComplicationPlayPauseImpl(
 
     private fun setEnable(enable: Boolean) {
         Log.d(TAG, "Setting enable: $enable")
-        var styleSetting = watch.currentUserStyleRepository!!.schema.userStyleSettings.get(0)
-        var defaultOption = styleSetting.options.get(if (enable) 1 else 0)
-        val newStyle: UserStyle = UserStyle(
+        val styleSetting = watch.currentUserStyleRepository!!.schema.userStyleSettings.get(0)
+        val defaultOption = styleSetting.options.get(if (enable) 1 else 0)
+        val newStyle = UserStyle(
             selectedOptions = mapOf(
                 Pair(
                     styleSetting, defaultOption
@@ -114,9 +106,15 @@ class VirtualComplicationPlayPauseImpl(
         watch.currentUserStyleRepository!!.updateUserStyle(newStyle)
     }
 
+    override val color: Int
+        get() = -1
+
+    override val expiresms: Long
+        get() = -1
+
     companion object {
         suspend fun setWatchState(watch: DigitalWatchCanvasRenderer, visible: Boolean?) {
-            if (visible != null && playPauseMode.get()==PlayPauseMode.PAUSE) {
+            if (visible != null && playPauseEnabled.get()) {
                 Log.d(TAG, "WatchState.visible=$visible")
                 val nodeMap = getCapabilitiesForReachableNodes(watch.capabilityClient)
                 nodeMap.filter { e -> e.value.contains("mobile") }.map { e -> e.key }.forEach { n ->

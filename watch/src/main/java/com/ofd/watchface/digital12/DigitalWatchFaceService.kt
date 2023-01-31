@@ -128,20 +128,7 @@ class DigitalWatchFaceService : WatchFaceService() {
         return WatchFace(
             watchFaceType = WatchFaceType.DIGITAL,
             renderer = renderer
-        ).setTapListener(WFlistener)
-    }
-
-    object WFlistener : WatchFace.TapListener {
-        override fun onTapEvent(
-            tapType: Int,
-            tapEvent: TapEvent,
-            complicationSlot: ComplicationSlot?
-        ) {
-            Log.d(
-                TAG, "onTap: " + tapType + ":" + tapEvent.toString() + ":" +
-                    (complicationSlot?.id ?: -1).toString()
-            )
-        }
+        ).setTapListener(renderer)
     }
 
     override fun onCreate() {

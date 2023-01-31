@@ -26,7 +26,7 @@ class Complications {
                     Log.d(
                         TAG, "Complication: " + cs.key + ": " + dataSource.toString()
                     )
-                    if (dataSource.packageName.equals("com.ofd.complications")) {
+                    if (dataSource.packageName.equals("com.ofd.watch")) {
                         Log.d(TAG, "updating " + dataSource.toString())
                         ComplicationDataSourceUpdateRequester.create(
                             applicationContext, dataSource

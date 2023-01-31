@@ -32,7 +32,7 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name="com.ofd.digital.com.ofd.watchface.datalayer.MainActivity"
+            android:name="com.ofd.digital.watchface.datalayer.MainActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar">
             <intent-filter>

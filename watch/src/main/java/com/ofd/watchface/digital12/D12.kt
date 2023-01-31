@@ -109,6 +109,11 @@ class D12 {
             color = Color.BLACK
         }
 
+        val grayBackground = Paint().apply {
+            style = Paint.Style.FILL_AND_STROKE
+            color = Color.LTGRAY
+        }
+
         private const val cts = 35f
         private const val ctss = cts * .75f
 

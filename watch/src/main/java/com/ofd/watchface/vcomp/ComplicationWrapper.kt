@@ -36,16 +36,14 @@ class ComplicationWrapper(private val slot: ComplicationSlot) {
                     watch
                 )
             }
-            if (watch.context != null) {
-                if (cls.endsWith("BatteryProviderService"))
-                    return VirtualBatteryComplicationImpl(
-                        slot,
-                        watch.context.resources,
-                        instant
-                    )
-            }
+            if (cls.endsWith("BatteryProviderService"))
+                return VirtualBatteryComplicationImpl(
+                    slot,
+                    watch,
+                    instant
+                )
         }
-        return StandardComplication(slot, watch.context.resources, instant)
+        return StandardComplication(slot, watch, instant)
     }
 
 

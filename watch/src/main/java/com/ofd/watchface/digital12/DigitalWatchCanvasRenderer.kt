@@ -21,10 +21,14 @@ import android.util.Log
 import android.view.SurfaceHolder
 import androidx.core.graphics.toRectF
 import androidx.wear.watchface.*
-import androidx.wear.watchface.complications.data.*
-import androidx.wear.watchface.style.*
+import androidx.wear.watchface.complications.data.ComplicationType
+import androidx.wear.watchface.style.CurrentUserStyleRepository
+import androidx.wear.watchface.style.UserStyle
+import androidx.wear.watchface.style.WatchFaceLayer
 import com.google.android.gms.wearable.Wearable
-import com.ofd.complications.*
+import com.ofd.complications.ComplicationWrapper
+import com.ofd.complications.Complications
+import com.ofd.complications.VirtualComplicationPlayPauseImpl
 import com.ofd.watchface.location.WatchLocationService
 import com.ofd.watchface.vcomp.ComplicationSlotManagerHolder
 import com.ofd.watchface.vcomp.VirtualComplicationWatchRenderSupport
@@ -38,7 +42,7 @@ import kotlinx.coroutines.*
 // Default for how long each frame is displayed at expected frame rate.
 private const val FRAME_PERIOD_MS_DEFAULT: Long = 250
 
-val dtf : DateTimeFormatter = DateTimeFormatter.ofPattern("EEE dd")
+val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE dd")
 
 
 /**
@@ -59,24 +63,27 @@ class DigitalWatchCanvasRenderer(
     canvasType,
     FRAME_PERIOD_MS_DEFAULT,
     clearWithBackgroundTintBeforeRenderingHighlightLayer = false
-), VirtualComplicationWatchRenderSupport {
+), VirtualComplicationWatchRenderSupport, WatchFace.TapListener {
 
+    var dateBounds: RectF? = null
+    var dateHighlight = false
 
     class DigitalSharedAssets : SharedAssets {
         override fun onDestroy() {
         }
     }
 
-    override val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main
-        .immediate)
+    override val scope: CoroutineScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Main.immediate
+    )
 
-//    val dataClient by lazy { Wearable.getDataClient(context) }
+    //    val dataClient by lazy { Wearable.getDataClient(context) }
     override val messageClient by lazy { Wearable.getMessageClient(context) }
     override val capabilityClient by lazy { Wearable.getCapabilityClient(context) }
 
     init {
         val renderer = this
-        complicationSlotManagerHolder.watch=this
+        complicationSlotManagerHolder.watch = this
         scope.launch {
             currentUserStyleRepository.userStyle.collect { userStyle ->
                 updateWatchFaceData(userStyle)
@@ -85,9 +92,25 @@ class DigitalWatchCanvasRenderer(
         scope.launch {
             watchState.isVisible.collect { v ->
                 VirtualComplicationPlayPauseImpl.setWatchState(
-                    renderer,
-                    v
+                    renderer, v
                 )
+            }
+        }
+    }
+
+    override fun onTapEvent(
+        tapType: Int, tapEvent: TapEvent, complicationSlot: ComplicationSlot?
+    ) {
+        Log.d(
+            TAG,
+            "onTap: " + tapType + ":" + tapEvent.toString() + ":" + (complicationSlot?.id
+                ?: -1).toString()
+        )
+        if (complicationSlot == null) {
+            if (dateBounds!!.contains(tapEvent.xPos.toFloat(), tapEvent.yPos.toFloat())) {
+                WatchLocationService.forceLocationUpdate()
+                Complications.forceComplicationUpdate(context, complicationSlotManagerHolder)
+                dateHighlight = true
             }
         }
     }
@@ -137,10 +160,7 @@ class DigitalWatchCanvasRenderer(
 //        Log.d(TAG, "render()")
 
         WatchLocationService.doOnRender(
-            scope,
-            context,
-            renderParameters,
-            complicationSlotManagerHolder
+            scope, context, renderParameters, complicationSlotManagerHolder
         )
 
         val backgroundColor = if (renderParameters.drawMode == DrawMode.AMBIENT) {
@@ -157,7 +177,6 @@ class DigitalWatchCanvasRenderer(
         if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS_OVERLAY)) {
             drawTime(canvas, bounds, zonedDateTime)
         }
-
 
 
 //        if (renderParameters.drawMode == DrawMode.INTERACTIVE && renderParameters.watchFaceLayers.contains(
@@ -204,10 +223,9 @@ class DigitalWatchCanvasRenderer(
     private fun drawArc(
         complicationWrapper: ComplicationWrapper, zonedDateTime: ZonedDateTime, canvas: Canvas
     ) {
-        val complication =
-            complicationWrapper.virtualComplication(
-                this, zonedDateTime.toInstant()
-            )
+        val complication = complicationWrapper.virtualComplication(
+            this, zonedDateTime.toInstant()
+        )
         val type = complication.type
         if (type == ComplicationType.RANGED_VALUE) {
 //            Log.d(TAG, "Range Value mono image: " + d.monochromaticImage)
@@ -218,12 +236,10 @@ class DigitalWatchCanvasRenderer(
                 complicationWrapper.computeBounds(Rect(0, 0, canvas.width, canvas.height)).toRectF()
             val arcBackgroundPaint = getCompPaint(complicationWrapper.id)
 
-            val instructions = complication.text
-            val inx = instructions.indexOf("?Color:")
-//            Log.d(TAG, "txt="+instructions+":"+inx)
-            val offset = if (inx > 0) {
+            val cinx = complication.color
+            val offset = if (cinx >= 0) {
 //                Log.d(TAG, "part:"+instructions.substring(inx+"#Color:".length))
-                (Integer.parseInt(instructions.substring(inx + "?Color:".length)) + 2) * 1000
+                (cinx + 2) * 1000
             } else {
                 2000
             }
@@ -234,8 +250,7 @@ class DigitalWatchCanvasRenderer(
             }
             val arcValuePaint = getCompPaint(selector)
             val off =
-                arcValuePaint.strokeWidth / 2f * 1.1f * if (complicationWrapper.id == COMPLICATION_10)
-                    1 else 1
+                arcValuePaint.strokeWidth / 2f * 1.1f * if (complicationWrapper.id == COMPLICATION_10) 1 else 1
             val bounds = RectF(
                 cbounds.left + off,
                 cbounds.top + off,
@@ -243,10 +258,8 @@ class DigitalWatchCanvasRenderer(
                 cbounds.bottom - 1f * off
             )
             val valueSweepAngle = D12.sweepAngle * min(
-                1f, (complication.rangeValue -
-                    complication.rangeMin) /
-                    (complication.rangeMax
-                        - complication.rangeMin)
+                1f,
+                (complication.rangeValue - complication.rangeMin) / (complication.rangeMax - complication.rangeMin)
             )
 
             val (backgroundStart, backgroundSweep) = if (complicationWrapper.id == COMPLICATION_10) {
@@ -330,8 +343,7 @@ class DigitalWatchCanvasRenderer(
         //                    Log.d(TAG, "\t" + d.javaClass)
         //                    Log.d(TAG, "\t" + d.dataSource)
         val complication = complicationWrapper.virtualComplication(
-            this, zonedDateTime
-                .toInstant()
+            this, zonedDateTime.toInstant()
         )
         if (complication.type == ComplicationType.LONG_TEXT) {
             //                        Log.d(TAG, "\t" + ld.contentDescription!!.getTextAt(context.resources, Instant.now()))
@@ -403,11 +415,7 @@ class DigitalWatchCanvasRenderer(
             val drawable = image?.loadDrawable(context)
             var textClipBounds = bounds
             if (complication.customDrawable(
-                    canvas,
-                    left,
-                    bounds.top.toFloat(),
-                    bottom,
-                    h.toFloat()
+                    canvas, left, bounds.top.toFloat(), bottom, h.toFloat()
                 )
             ) {
                 textClipBounds = if (complicationWrapper.id % 2 == 1) {
@@ -482,20 +490,21 @@ class DigitalWatchCanvasRenderer(
         val textBounds = Rect()
         val date = zonedDateTime.format(dtf)
         D12.textPaint.getTextBounds(date, 0, date.length, textBounds)
-        canvas.drawRoundRect(
+        dateBounds = RectF(
             cx - textBounds.width() / 1.8f,
             datecy - textBounds.height() / 1.6f,
             cx + textBounds.width() / 1.7f,
-            datecy + textBounds.height() / 1.6f,
-            textBounds.height() * .2f,
-            textBounds.height() * .2f,
-            D12.blackBackground
+            datecy + textBounds.height() / 1.6f
         )
+        canvas.drawRoundRect(
+            dateBounds!!,
+            textBounds.height() * .2f,
+            textBounds.height() * .2f,
+            if (dateHighlight) D12.grayBackground else D12.blackBackground
+        )
+        dateHighlight=false
         canvas.drawText(
-            date,
-            cx - textBounds.width() / 2.0f,
-            datecy + textBounds.height() / 2.0f,
-            D12.textPaint
+            date, cx - textBounds.width() / 2.0f, datecy + textBounds.height() / 2.0f, D12.textPaint
         )
 //        canvas.drawText(
 //            date,

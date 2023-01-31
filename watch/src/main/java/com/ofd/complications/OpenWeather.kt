@@ -15,15 +15,19 @@
  */
 package com.ofd.complications
 
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.graphics.drawable.Icon
 import android.util.Log
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
-import com.ofd.watchface.location.WatchLocationService
+import com.ofd.openweather.OpenWeatherActivity
 import com.ofd.openweather.OpenWeatherService
-import kotlinx.coroutines.runBlocking
 import com.ofd.watch.R
+import com.ofd.watchface.location.WatchLocationService
+import kotlinx.coroutines.runBlocking
 
 /**
  * Not yet complete...
@@ -45,31 +49,29 @@ class OpenWeather : ComplicationDataSourceService() {
 
     override fun getPreviewData(type: ComplicationType): ComplicationData {
         return LongTextComplicationData.Builder(
-            text = PlainComplicationText.Builder(text = "AirQuality")
-                .build(),
+            text = PlainComplicationText.Builder(text = "AirQuality").build(),
             contentDescription = PlainComplicationText.Builder(text = "AirQuality").build()
         ).setTapAction(null).build()
     }
 
     override fun onComplicationRequest(
-        request: ComplicationRequest,
-        listener: ComplicationRequestListener
+        request: ComplicationRequest, listener: ComplicationRequestListener
     ) {
         Log.d(TAG, "onComplicationRequest() id: ${request.complicationInstanceId}")
 
         val wl = WatchLocationService.getLocation()
         Log.d(TAG, "Updating AirQuality: " + wl.valid)
-        if (api == null)
-            api = OpenWeatherService.OpenWeatherAPI(applicationContext)
+        if (api == null) api = OpenWeatherService.OpenWeatherAPI(applicationContext)
 
         if (wl.valid) {
-            api!!.get(wl.location.location!!) {
+            api!!.get(wl.location) {
                 updateComplication(request.complicationType, listener, it)
             }
         } else {
             updateComplication(
-                request.complicationType, listener,
-                OpenWeatherService.OWResult("no location", 0f, "", false)
+                request.complicationType,
+                listener,
+                OpenWeatherService.OWNowResult("no location", 0f, "", false)
             )
         }
     }
@@ -77,7 +79,7 @@ class OpenWeather : ComplicationDataSourceService() {
     private fun updateComplication(
         complicationType: ComplicationType,
         listener: ComplicationRequestListener,
-        aqi: OpenWeatherService.OWResult
+        ow: OpenWeatherService.OWNowResult
     ) {
         runBlocking {
             Log.d(TAG, "Results: " + OpenWeatherService.OpenWeatherAPI.statusString())
@@ -88,20 +90,19 @@ class OpenWeather : ComplicationDataSourceService() {
 //            val result = imageLoader.execute(request)
 
             val image = MonochromaticImage.Builder(
-                Icon.createWithResource(
-                    applicationContext,
-                    R.drawable.ic_air_quality
+                ow.icon ?: Icon.createWithResource(
+                    applicationContext, R.drawable.openweather
                 )
             ).build()
             val cdata = when (complicationType) {
 
                 ComplicationType.SHORT_TEXT -> ShortTextComplicationData.Builder(
                     text = PlainComplicationText.Builder(
-                        text = aqi.temp.toInt().toString() + "\u00b0"
+                        text = ow.temp.toInt()
+                            .toString() + "\u00b0" + "?ExpiresMS=" + (System.currentTimeMillis() + 30 * 60 * 1000)
                     ).build(),
                     contentDescription = PlainComplicationText.Builder(text = "AirQuality").build(),
-                ).setMonochromaticImage(image)
-                    .build()
+                ).setMonochromaticImage(image).setTapAction(tapAction()).build()
 
                 else -> {
                     Log.w(TAG, "Unexpected complication type $complicationType")
@@ -111,6 +112,17 @@ class OpenWeather : ComplicationDataSourceService() {
 
             listener.onComplicationData(cdata)
         }
+    }
+
+    fun Context.tapAction(): PendingIntent? {
+        val intent = Intent(this, OpenWeatherActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     override fun onComplicationDeactivated(complicationInstanceId: Int) {

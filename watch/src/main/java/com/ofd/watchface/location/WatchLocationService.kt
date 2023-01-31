@@ -1,6 +1,7 @@
 package com.ofd.watchface.location
 
 import android.content.Context
+import android.location.Location
 import android.util.Log
 import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.RenderParameters
@@ -57,6 +58,10 @@ class WatchLocationService {
             val valid = location.valid
             suspend fun getAddressDescription() = location.getAddressDescription()
             suspend fun getShortAddress() = location.getShortAddress()
+        }
+
+        fun forceLocationUpdate() {
+            lastTime.set(0)
         }
 
         fun doOnRender(

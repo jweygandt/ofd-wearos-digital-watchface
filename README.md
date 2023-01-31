@@ -19,24 +19,27 @@ So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
 
-1/15/22 Did a big cleanup and refactor, even changed the application id. It looks better than the
-1/14 code, IT COMPILES, BUT HAS NOT BEEN TESTED, so likely will have some bugs.
-
-1/14/22 At the moment the code is really hacked - very much so!, and will be cleaned up considerably
-later, but I'm feeling a need to push the changes to the cloud.
+1/30/23 Cleaned up refactoring (Note: the package name changed), tested the code and am using this
+version today. For the play/pause complication, got rid of the taponly mode as that was not really
+useful. Updated some icons. Added an activity of Open Weather (first cut). Fixed OpenWeatherAQI due
+to misunderstanding the API. Moving to Open Weather to the One Call API 3.0 (you will need to update api
+keys for that, still free for limited use)
 
 # Play/Pause
 
 A really big feature being added is the ability to pause/resume music with different methods.
 Imagine listening to Spotify, on a ski slope, mittens on. You really cannot navigate to Spotify, if
 needed, and then have the precision to tap the pause button. Right now by placing Virutal Play/Pause
-Complication in position 7 you can toggle it to 3 modes: 1)stop-disabled, 2)play-tapenabled, 3)
-pause-tap and visibility enabled. So with tapenabled you simply tap the screen anywhere other than
-complicaiton 7 or the music playing icon and it will toggle play/pause. With visibility enabled,
-when the watch face becomes visible play pauses, and when not visible play resumes. Allowing you to
-run spotify the app, and use buttons to bring up watch face, and (customised) double press to go to
-last app. Pause/resume by the button push. I should note it needs the phone app installed on the
-phone, and it need to be started, but not necessarlly visible
+Complication in position 7 you can toggle it to 2 modes: 1)stop-disabled, 2)pause-tap and visibility
+enabled. So with tapenabled you simply tap the screen anywhere other than complicaiton 7 or the
+music playing icon and it will toggle play/pause. With visibility enabled, when the watch face
+becomes visible play pauses, and when not visible play resumes. Allowing you to run spotify the app,
+and use buttons to bring up watch face, and (customised) double press to go to last app.
+Pause/resume by the button push. I should note it needs the phone app installed on the phone, and it
+need to be started, but not necessarlly visible. BE SURE TO DISABLE THE SOS MODE on the triple
+button press. Likely the effort to get to the button with ski clothes on will not bring the watch
+out of ambient, so you must do a button press to achieve that. This means the resume music will be "
+press-pause-double-press", which sometimes is a triple press.
 (actually that is a big hack right now as well)
 
 # Virtual Complications
@@ -121,3 +124,11 @@ You will need a res/values/api_kes.xml like this (in .gitignore):
     <string name="openweather_appid">XXX</string>
 </resources>
 .```
+
+# Changes
+1/15/22 Did a big cleanup and refactor, even changed the application id. It looks better than the
+1/14 code, IT COMPILES, BUT HAS NOT BEEN TESTED, so likely will have some bugs.
+
+1/14/22 At the moment the code is really hacked - very much so!, and will be cleaned up considerably
+later, but I'm feeling a need to push the changes to the cloud.
+

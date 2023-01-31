@@ -43,15 +43,18 @@ class VirtualComplicationStatusImpl : VirtualComplication {
         get() = 0f
 
     override fun customDrawable(
-        canvas: Canvas,
-        bleft: Float,
-        btop: Float,
-        bbottom: Float,
-        sqsize: Float
+        canvas: Canvas, bleft: Float, btop: Float, bbottom: Float, sqsize: Float
     ): Boolean = false
 
     override val tapCallback: Runnable?
         get() = null
+
+    override val color: Int
+        get() = -1
+
+    override val expiresms: Long
+        get() = -1
+
 }
 
 class VirtualComplicationStatus : ComplicationDataSourceService() {
@@ -66,8 +69,7 @@ class VirtualComplicationStatus : ComplicationDataSourceService() {
     }
 
     override fun onComplicationActivated(
-        complicationInstanceId: Int,
-        type: ComplicationType
+        complicationInstanceId: Int, type: ComplicationType
     ) {
         Log.d(TAG, "onComplicationActivated(): $complicationInstanceId")
 
@@ -78,16 +80,12 @@ class VirtualComplicationStatus : ComplicationDataSourceService() {
         return LongTextComplicationData.Builder(
             text = PlainComplicationText.Builder(text = "Here is line one\nline 2\nline 3 and one that is long\nline 4")
                 .build(),
-            contentDescription = PlainComplicationText.Builder(text = "Calendar.")
-                .build()
-        )
-            .setTapAction(null)
-            .build()
+            contentDescription = PlainComplicationText.Builder(text = "Calendar.").build()
+        ).setTapAction(null).build()
     }
 
     override fun onComplicationRequest(
-        request: ComplicationRequest,
-        listener: ComplicationRequestListener
+        request: ComplicationRequest, listener: ComplicationRequestListener
     ) {
         val msg = D12.status.get() ?: "Not yet set"
         val data = when (request.complicationType) {
@@ -96,19 +94,15 @@ class VirtualComplicationStatus : ComplicationDataSourceService() {
                 text = PlainComplicationText.Builder(
                     text = "Short"
                 ).build(),
-                contentDescription = PlainComplicationText.Builder(text = "Calender")
-                    .build()
-            )
-                .build()
+                contentDescription = PlainComplicationText.Builder(text = "Calender").build()
+            ).build()
 
             ComplicationType.LONG_TEXT -> LongTextComplicationData.Builder(
                 text = PlainComplicationText.Builder(
                     text = msg
                 ).build(),
-                contentDescription = PlainComplicationText.Builder(text = "Calender")
-                    .build()
-            )
-                .build()
+                contentDescription = PlainComplicationText.Builder(text = "Calender").build()
+            ).build()
 
             else -> {
                 Log.w(TAG, "Unexpected complication type ${request.complicationType}")

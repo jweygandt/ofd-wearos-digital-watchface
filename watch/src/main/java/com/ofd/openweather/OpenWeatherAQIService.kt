@@ -5,6 +5,8 @@ import android.location.Location
 import android.util.Log
 import com.google.gson.*
 import com.ofd.watch.R
+import com.thanglequoc.aqicalculator.AQICalculator
+import com.thanglequoc.aqicalculator.Pollutant
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -25,6 +27,8 @@ class OpenWeatherAQIService {
         private const val TAG = "OpenWeatherAQIService"
 
         private const val OPENWEATHER_AIR_QUALITY = "http://api.openweathermap.org/data/2.5/"
+
+        val calculator: AQICalculator = AQICalculator.getAQICalculatorInstance()
     }
 
     interface AQIService {
@@ -39,9 +43,12 @@ class OpenWeatherAQIService {
     class OWAQIResult(
         val fulljson: String,
         val date: Long,
-        val aqi: Float,
+        val color: Int,
+        val pm2_5: Float,
         val hasRealData: Boolean
-    )
+    ){
+        public val aqi = calculator.getAQI(Pollutant.PM25, pm2_5.toDouble()).aqi.toFloat()
+    }
 
 /* example:
 200 success
@@ -85,15 +92,18 @@ class OpenWeatherAQIService {
                 Log.d(TAG, "JSON: " + fulljson)
 
                 val ary = obj.getAsJsonArray("list")
-                if (ary.size() > 0) OWAQIResult(fulljson, 0L, 0.0f, false)
+                if (ary.size() > 0) OWAQIResult(fulljson, 0L, 0, 0f, false)
 
                 val elt = ary.get(0).asJsonObject
                 val date = elt.getAsJsonPrimitive("dt").asLong
                 val main = elt.getAsJsonObject("main")
 //                Log.d(TAG, "main: " + main.toString())
-                val aqi = main.get("aqi").asFloat
+                val aqi = main.get("aqi").asInt
 
-                return OWAQIResult(fulljson, date, aqi, true)
+                val comps = elt.getAsJsonObject("components")
+                val pm2_5 = comps.getAsJsonPrimitive("pm2_5").asFloat
+
+                return OWAQIResult(fulljson, date, aqi, pm2_5, true)
             } catch (e: Exception) {
                 throw JsonParseException(e)
             }
@@ -114,7 +124,7 @@ class OpenWeatherAQIService {
             val metricNumBypass = AtomicInteger()
 
             var lastQueryTimeMs = 0L
-            var lastQueryData = OWAQIResult("initial", 0, 0f, false)
+            var lastQueryData = OWAQIResult("initial", 0, 0, 0f, false)
 
             fun statusString() =
                 "" + metricNumCalls.get() +
@@ -183,14 +193,14 @@ class OpenWeatherAQIService {
                             TAG, "Issues: " + response.message() + ":" + response.body() + ":"
                                 + response.code()
                         )
-                        callback.accept(OWAQIResult(response.message(), 0, 0f, false))
+                        callback.accept(OWAQIResult(response.message(), 0, 0, 0f, false))
                     }
                 }
 
                 override fun onFailure(call: Call<OWAQIResult>, t: Throwable) {
                     metricNumErrors.incrementAndGet()
                     Log.e("TAG", "Problems on call: " + t.message, t)
-                    callback.accept(OWAQIResult(t.message ?: "", 0, 0f, false))
+                    callback.accept(OWAQIResult(t.message ?: "", 0, 0, 0f, false))
                 }
             })
         }

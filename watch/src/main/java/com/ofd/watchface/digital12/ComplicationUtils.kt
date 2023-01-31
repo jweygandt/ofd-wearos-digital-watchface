@@ -36,7 +36,6 @@ import androidx.wear.watchface.style.CurrentUserStyleRepository
 import com.ofd.complications.*
 import com.ofd.watch.R
 import com.ofd.watchface.vcomp.ComplicationSlotManagerHolder
-import com.ofd.watchface.vcomp.NullVCompSupport
 import kotlinx.coroutines.launch
 
 private const val DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID = R.drawable.complication_red_style
@@ -436,12 +435,12 @@ class Listener(
         Log.d("ComplicationUtils", "onTap: " + complicationSlotId)//, Throwable("traceback"))
         val cw = mgrh.slotWrappers.find { cw -> cw.id == complicationSlotId }
         if (complicationSlotId == COMPLICATION_14) {
-            mgrh.watch!!.scope.launch {
-                VirtualComplicationPlayPauseImpl.toggleMusic(mgrh.watch!!)
+            mgrh.watch.scope.launch {
+                VirtualComplicationPlayPauseImpl.toggleMusic(mgrh.watch)
             }
         } else if (cw != null) {
             val cb =
-                cw.virtualComplication(NullVCompSupport(),null).tapCallback
+                cw.virtualComplication(mgrh.watch,null).tapCallback
             if (cb != null) cb.run()
         }
     }

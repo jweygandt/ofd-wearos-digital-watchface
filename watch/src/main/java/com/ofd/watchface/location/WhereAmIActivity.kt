@@ -85,6 +85,7 @@ class WhereAmIActivity : FragmentActivity() {
 
     override fun onStop() {
         Log.d(TAG, "onStop()")
+        super.onStop()
 //        forceComplicationUpdate()
     }
 
