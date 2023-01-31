@@ -27,20 +27,19 @@ api keys for that, still free for limited use)
 
 # Play/Pause
 
-A really big feature being added is the ability to pause/resume music with different methods.
-Imagine listening to Spotify, on a ski slope, mittens on. You really cannot navigate to Spotify, if
-needed, and then have the precision to tap the pause button. Right now by placing Virutal Play/Pause
+A really big feature added is the ability to pause/resume music with different methods. Imagine
+listening to Spotify, on a ski slope, mittens on. You really cannot navigate to Spotify, if needed,
+and then have the precision to tap the pause button. Right now by placing Virutal Play/Pause
 Complication in position 7 you can toggle it to 2 modes: 1)stop-disabled, 2)pause-tap and visibility
 enabled. So with tapenabled you simply tap the screen anywhere other than complicaiton 7 or the
 music playing icon and it will toggle play/pause. With visibility enabled, when the watch face
 becomes visible play pauses, and when not visible play resumes. Allowing you to run spotify the app,
 and use buttons to bring up watch face, and (customised) double press to go to last app.
 Pause/resume by the button push. I should note it needs the phone app installed on the phone, and it
-need to be started, but not necessarlly visible. BE SURE TO DISABLE THE SOS MODE on the triple
-button press. Likely the effort to get to the button with ski clothes on will not bring the watch
-out of ambient, so you must do a button press to achieve that. This means the resume music will be "
-press-pause-double-press", which sometimes is a triple press.
-(actually that is a big hack right now as well)
+need to be started, but not necessarlly visible (actually that is a big hack right now as well). BE
+SURE TO DISABLE THE SOS MODE on the triple button press. The effort to get to the button with ski
+clothes on may not bring the watch out of ambient, so you must do a button press to achieve that.
+This means the resume music will be "press-pause-double-press", which sometimes is a triple press.
 
 # Virtual Complications
 
@@ -74,7 +73,7 @@ suggest changes. I do use the watch face daily. I have not given much thought to
 various app/complication icons in editor mode, as I only use that briefly.
 
 I noticed that images, called monochromatic... are really in full color, and that color could be
-supported. So why not.
+supported. So why not. Also complication animations, like heartbeat.
 
 I do wish Samsung did better with the complications they deliver, when used with 3rd party watch
 faces, but they don't! So I'm also doing some complications myself. You can look at HonestHeartRate.
@@ -82,20 +81,21 @@ Their calendar complication works differently in their watch faces as well!!
 
 As to editing - That seems more complex than it should. For a while I was using the phone app, and
 it worked, then suddenly most of the complications disappeared, even for Samsung's watchfaces! So I
-have buttons. It's functional
+have buttons. It's functional, that's about all that can be said.
 
-I tries https://github.com/google/where-am-i and realized that locations don't update very
+I tried https://github.com/google/where-am-i and realized that locations don't update very
 reliabily. Tested on Galaxy Watch 5. Perhaps some power/permission management for complications,
 likely througly undocumented (if not I'd like to read about it). I have seen that location works
 fine, if Priority is set correctly (e.g. LocationRequest.PRIORITY_HIGH_ACCURACY), if it is run in
 the process of the WatchFace. Unfortunately that means the complications cannot be standalone.
 
-Included are Sunrise/Sunset and 2 different AQI methods. I'm currently using OpenWeatherAQI.
-Eventually I'd like to do a weather complication that uses location all the time, but does not
-report to 3rd parties. There is also some long text complications for testing.
+Included are Sunrise/Sunset and 2 different AQI methods. I'm currently using OpenWeatherAQI. There
+is a weather complication based on OpenWeather that uses location all the time, but does not report
+to 3rd parties. A tap will bring up extended forecast, still working on that. There is also some
+long text complications for testing.
 
 Also I decided to have some fun with rendering the range complications, by providing some URL like
-parameters, see the AQI complications. TODO - I should actually pull these parameters out into first
+parameters, see the AQI complications. Working on pulling these parameters out into first
 class VirtualComplication arguments of sorts.
 
 Thanks to:
