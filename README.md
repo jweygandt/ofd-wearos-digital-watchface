@@ -22,8 +22,8 @@ So with that in mind, I'm breaking some rules and hacking away...
 1/30/23 Cleaned up refactoring (Note: the package name changed), tested the code and am using this
 version today. For the play/pause complication, got rid of the taponly mode as that was not really
 useful. Updated some icons. Added an activity of Open Weather (first cut). Fixed OpenWeatherAQI due
-to misunderstanding the API. Moving to Open Weather to the One Call API 3.0 (you will need to update api
-keys for that, still free for limited use)
+to misunderstanding the API. Moving to Open Weather to the One Call API 3.0 (you will need to update
+api keys for that, still free for limited use)
 
 # Play/Pause
 
@@ -118,14 +118,15 @@ You will need a res/values/api_kes.xml like this (in .gitignore):
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="purpleair_api_key_read">XXX</string>
-    <string name="purpleair_api_key_write">XXX</string>
+  <string name="purpleair_api_key_read">XXX</string>
+  <string name="purpleair_api_key_write">XXX</string>
 
-    <string name="openweather_appid">XXX</string>
+  <string name="openweather_appid">XXX</string>
 </resources>
-.```
+```
 
 # Changes
+
 1/15/22 Did a big cleanup and refactor, even changed the application id. It looks better than the
 1/14 code, IT COMPILES, BUT HAS NOT BEEN TESTED, so likely will have some bugs.
 
