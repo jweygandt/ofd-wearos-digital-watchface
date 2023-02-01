@@ -22,10 +22,12 @@ import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
 import com.ofd.watchface.location.LocationViewModel
 import com.ofd.watchface.location.ResolvedLocation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
-class OpenWeatherActivity : ComponentActivity() {
+class OpenWeatherAQIActivity : ComponentActivity() {
 
     var lastTime: Long = 0;
 
@@ -33,7 +35,7 @@ class OpenWeatherActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            OpenWeatherMainApp(
+            OpenWeatherAQIMainApp(
             )
         }
     }
@@ -41,17 +43,25 @@ class OpenWeatherActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            when (val weather = getWeather(
+            when (val aqi = getAQI(
                 applicationContext, LocationViewModel(
                     TAG, applicationContext
                 ).readLocationResult() as ResolvedLocation
             )) {
-                is WeatherResult.Weather -> {
-                    weather3.value = weather
+                is AQIResult.AQI -> {
+                    withContext(Dispatchers.IO) {
+                        aqiaddress.value = try {
+                            aqi.rlocation.getShortAddress()
+                        } catch (e:java.lang.Exception) {
+                            null
+                        }
+                        Log.d(TAG, "address: " + aqiaddress.value)
+                    }
+                    aqidata.value = aqi
                 }
 
-                is WeatherResult.Error -> {
-                    Log.e(TAG, "Error: " + weather.msg)
+                is AQIResult.Error -> {
+                    Log.e(TAG, "Error: " + aqi.msg)
                 }
             }
         }

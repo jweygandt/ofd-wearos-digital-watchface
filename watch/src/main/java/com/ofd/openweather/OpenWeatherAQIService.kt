@@ -1,209 +1,149 @@
 package com.ofd.openweather
 
 import android.content.Context
-import android.location.Location
 import android.util.Log
-import com.google.gson.*
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import com.ofd.watch.R
+import com.ofd.watchface.location.ResolvedLocation
 import com.thanglequoc.aqicalculator.AQICalculator
 import com.thanglequoc.aqicalculator.Pollutant
-import java.lang.reflect.Type
+import java.io.InputStreamReader
+import java.net.URL
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Consumer
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
-class OpenWeatherAQIService {
+private const val TAG = "OpenWeatherAQIService"
 
-    companion object {
-        private const val TAG = "OpenWeatherAQIService"
+private const val OPENWEATHER_AIR_QUALITY = "http://api.openweathermap.org/data/2.5/air_pollution?"
 
-        private const val OPENWEATHER_AIR_QUALITY = "http://api.openweathermap.org/data/2.5/"
+private val metricNumCalls = AtomicInteger()
+private val metricNumSuccess = AtomicInteger()
+private val metricNumErrors = AtomicInteger()
+private val metricNumConflict = AtomicInteger()
+private val metricNumBypass = AtomicInteger()
 
-        val calculator: AQICalculator = AQICalculator.getAQICalculatorInstance()
+
+private val calculator: AQICalculator = AQICalculator.getAQICalculatorInstance()
+
+sealed class AQIResult() {
+    class AQI(val rlocation: ResolvedLocation, val fulljsonn: String, val date: Long, val color: Int, val comps: Map<String, Float>) :
+        AQIResult() {
+
+        public val address: String? = null
+
+        public val aqi = if (comps.containsKey("pm2_5")) calculator.getAQI(
+            Pollutant.PM25, comps.get("pm2_5")!!.toDouble()
+        ).aqi.toString() else "??"
+
+        fun colorInxForComp(comp: String, v: Float): Int {
+            fun inx(f0: Float, f1: Float, f2: Float, f3: Float, f4: Float = f3): Int {
+                return if (v <= f0) 0 else if (v <= f1) 1 else if (v <= f2) 2 else if (v <= f3) 3 else if (v <= f4) 4 else 5
+            }
+            return when (comp) {
+                "co" -> {
+                    inx(1f, 2f, 10f, 17f, 34f)
+                }
+                "no" -> {
+                    0
+                }
+                "no2" -> {
+                    inx(50f, 100f, 200f, 400f)
+                }
+                "o3" -> {
+                    inx(60f, 120f, 180f, 240f)
+                }
+                "so2" -> {
+                    inx(40f, 80f, 380f, 800f, 1600f)
+                }
+                "pm2_5" -> {
+                    inx(15f, 30f, 55f, 110f)
+                }
+                "pm10" -> {
+                    inx(25f, 50f, 90f, 180f)
+                }
+                "nh3" -> {
+                    inx(200f, 400f, 800f, 1200f, 1800f)
+                }
+                else -> 5
+            }
+        }
+        fun statusString() =
+            "" + metricNumCalls.get() + "/" + (metricNumSuccess.get() + metricNumBypass.get()) + ":" + metricNumBypass.get() + ":" + metricNumErrors.get() + ":" + metricNumConflict.get()
     }
 
-    interface AQIService {
-        @GET("air_pollution")
-        fun getAQI(
-            @Query("lat") lat: String,
-            @Query("lon") lon: String,
-            @Query("appid") appid: String
-        ): Call<OWAQIResult>?
-    }
-
-    class OWAQIResult(
-        val fulljson: String,
-        val date: Long,
-        val color: Int,
-        val pm2_5: Float,
-        val hasRealData: Boolean
-    ){
-        public val aqi = calculator.getAQI(Pollutant.PM25, pm2_5.toDouble()).aqi.toFloat()
-    }
-
-/* example:
-200 success
-{
-  "coord": [
-    50.0,
-    50.0
-  ],
-  "list": [
-    {
-      "dt": 1606147200,
-      "main": {
-        "aqi": 4.0
-      },
-      "components": {
-        "co": 203.609,
-        "no": 0.0,
-        "no2": 0.396,
-        "o3": 75.102,
-        "so2": 0.648,
-        "pm2_5": 23.253,
-        "pm10": 92.214,
-        "nh3": 0.117
-      }
-    }
-  ]
+    class Error(val msg: String) : AQIResult()
 }
-*/
 
-    private class AQIResultDeserializer : JsonDeserializer<OWAQIResult> {
-        override fun deserialize(
-            json: JsonElement?,
-            typeOfT: Type?,
-            context: JsonDeserializationContext?
-        ): OWAQIResult? {
-            if (json == null) return null
+private val valueRetentionMs = TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)
 
-            try {
-                val obj = json.asJsonObject
-                val fulljson = obj.toString()
-                Log.d(TAG, "JSON: " + fulljson)
+private val callInProgress = AtomicBoolean(false)
 
-                val ary = obj.getAsJsonArray("list")
-                if (ary.size() > 0) OWAQIResult(fulljson, 0L, 0, 0f, false)
+private var lastQueryTimeMs = 0L
+private var lastQueryData: AQIResult = AQIResult.Error("no data yet")
 
-                val elt = ary.get(0).asJsonObject
-                val date = elt.getAsJsonPrimitive("dt").asLong
-                val main = elt.getAsJsonObject("main")
-//                Log.d(TAG, "main: " + main.toString())
-                val aqi = main.get("aqi").asInt
 
-                val comps = elt.getAsJsonObject("components")
-                val pm2_5 = comps.getAsJsonPrimitive("pm2_5").asFloat
+private var appid: String? = null
 
-                return OWAQIResult(fulljson, date, aqi, pm2_5, true)
-            } catch (e: Exception) {
-                throw JsonParseException(e)
-            }
-        }
+suspend fun getAQI(context: Context, location: ResolvedLocation): AQIResult {
+    if (appid == null) appid = context.getString(R.string.openweather_appid)
+    metricNumCalls.incrementAndGet()
+    Log.d(TAG, "Getting AQI: " + location.toString())
+
+    val now = System.currentTimeMillis()
+    if (now - lastQueryTimeMs < valueRetentionMs) {
+        Log.d(TAG, "Bypassing AQI")
+        metricNumBypass.incrementAndGet()
+        return lastQueryData
     }
 
-
-    class OpenWeatherAQIAPI(context: Context) {
-        companion object {
-            val valueRetentionMs = TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)
-
-            val callInProgress = AtomicBoolean(false)
-
-            val metricNumCalls = AtomicInteger()
-            val metricNumSuccess = AtomicInteger()
-            val metricNumErrors = AtomicInteger()
-            val metricNumConflict = AtomicInteger()
-            val metricNumBypass = AtomicInteger()
-
-            var lastQueryTimeMs = 0L
-            var lastQueryData = OWAQIResult("initial", 0, 0, 0f, false)
-
-            fun statusString() =
-                "" + metricNumCalls.get() +
-                    "/" + (metricNumSuccess.get() + metricNumBypass.get()) +
-                    ":" + metricNumBypass.get() + ":" +
-                    metricNumErrors.get() + ":" + metricNumConflict.get()
-        }
-
-        private val appid = context.getString(R.string.openweather_appid)
-
-        private val gson = GsonBuilder()
-            .registerTypeAdapter(OWAQIResult::class.java, AQIResultDeserializer())
-            .create()
-
-        private val retrofit = Retrofit.Builder()
-            .baseUrl(OPENWEATHER_AIR_QUALITY)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-
-        private val service: AQIService =
-            retrofit.create(AQIService::class.java)
-
-        fun getAQI(location: Location, callback: Consumer<OWAQIResult>) {
-            metricNumCalls.incrementAndGet()
-            Log.d(TAG, "Getting AQI: " + location.toString())
-
-            val now = System.currentTimeMillis()
-            if (now - lastQueryTimeMs < valueRetentionMs) {
-                Log.d(TAG, "Bypassing AQI")
-                metricNumBypass.incrementAndGet()
-                callback.accept(lastQueryData)
-            }
-
-            if (!callInProgress.compareAndSet(false, true)) {
-                Log.e(TAG, "Call in progress")
-                metricNumConflict.incrementAndGet()
-                callback.accept(lastQueryData)
-            }
-
-            getAQIInternal(location) {
-                callInProgress.set(false)
-                lastQueryData = it
-                lastQueryTimeMs = now
-                callback.accept(it)
-            }
-        }
-
-        private fun getAQIInternal(location: Location, callback: Consumer<OWAQIResult>) {
-            Log.d(TAG, "getAQI $location")
-
-            val call = service.getAQI(
-                lat = location.latitude.toString(),
-                lon = location.longitude.toString(),
-                appid = appid
-            )!!
-            Log.d(TAG, "Calling: " + call.request().url().toString())
-            call.enqueue(object : Callback<OWAQIResult> {
-                override fun onResponse(call: Call<OWAQIResult>, response: Response<OWAQIResult>) {
-                    Log.d(TAG, "onResponse")
-                    if (response.isSuccessful && response.body() != null) {
-                        metricNumSuccess.incrementAndGet()
-                        callback.accept(response.body()!!)
-                    } else {
-                        metricNumErrors.incrementAndGet()
-                        Log.d(
-                            TAG, "Issues: " + response.message() + ":" + response.body() + ":"
-                                + response.code()
-                        )
-                        callback.accept(OWAQIResult(response.message(), 0, 0, 0f, false))
-                    }
-                }
-
-                override fun onFailure(call: Call<OWAQIResult>, t: Throwable) {
-                    metricNumErrors.incrementAndGet()
-                    Log.e("TAG", "Problems on call: " + t.message, t)
-                    callback.accept(OWAQIResult(t.message ?: "", 0, 0, 0f, false))
-                }
-            })
-        }
+    if (!callInProgress.compareAndSet(false, true)) {
+        Log.e(TAG, "Call in progress")
+        metricNumConflict.incrementAndGet()
+        return lastQueryData
     }
 
+    return withContext(Dispatchers.IO) {
+        getAQIInternal(location).apply {
+            callInProgress.set(false)
+            lastQueryData = this
+            lastQueryTimeMs = now
+        }
+    }
+}
+
+private suspend fun getAQIInternal(resolvedLocation: ResolvedLocation): AQIResult {
+    Log.d(TAG, "getAQI $resolvedLocation")
+
+    val location = resolvedLocation.location!!
+    val url = URL(
+        OPENWEATHER_AIR_QUALITY + "lat=${location.latitude}&lon=${location.longitude}&appid=$appid"
+    )
+    val reader = InputStreamReader(url.openConnection().getInputStream())
+    val fulljsonn = reader.readText()
+    reader.close()
+    val top = JsonParser.parseString(fulljsonn).asJsonObject
+    if (false) {
+        Log.d(TAG, "JSON: $fulljsonn")
+    } else if (false) {
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        Log.d(TAG, "JSON: " + gson.toJson(top))
+    }
+
+    val lst = top.getAsJsonArray("list")[0].asJsonObject
+    val aqi = lst.getAsJsonObject("main").getAsJsonPrimitive("aqi").asInt
+
+    val comps = lst.getAsJsonObject("components")
+    val cmap = mutableMapOf<String, Float>()
+    for ((comp, value) in comps.entrySet()) {
+        cmap[comp] = value.asFloat
+    }
+
+    val date = lst.getAsJsonPrimitive("dt").asLong * 1000
+
+    return AQIResult.AQI(resolvedLocation, fulljsonn, date, aqi, cmap)
 }

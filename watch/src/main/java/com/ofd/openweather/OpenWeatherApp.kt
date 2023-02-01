@@ -20,6 +20,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -35,13 +37,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class Hourly(public val hour: Int, public val temp: Int, public val bitmap: Bitmap?)
-
-//val row1 = mutableStateListOf<Hourly>()
-
-val row1 = mutableStateOf(listOf<Hourly>())
-
-val weather3 = mutableStateOf<OpenWeatherService3.WeatherResult.Weather?>(null)
+val weather3 = mutableStateOf<WeatherResult.Weather?>(null)
 
 private val Calendar.hour
     get() = get(Calendar.HOUR_OF_DAY)
@@ -59,6 +55,7 @@ fun OpenWeatherMainApp(
     val scalingLazyListState = rememberScalingLazyListState(0, 0)
 
     val lazyRowState = rememberLazyListState()
+    val scrollState = rememberScrollState()
 
     val sdffull = SimpleDateFormat("MM/dd HH:mm")
 
@@ -72,10 +69,14 @@ fun OpenWeatherMainApp(
 
         var W by remember { weather3 }
 
+//        Column(modifier = Modifier.verticalScroll(scrollState)) {
+//            @Composable
+//            fun item(content: @Composable () -> Unit): Unit = content.invoke()
+
         ScalingLazyColumn(
             state = scalingLazyListState, contentPadding = PaddingValues(
                 horizontal = 8.dp, vertical = 32.dp
-            )
+            ), anchorType = ScalingLazyListAnchorType.ItemStart
         ) {
 
             val WW = W
@@ -98,25 +99,40 @@ fun OpenWeatherMainApp(
                         }
                     }
                 }
+                fun needToBreak(today: Calendar, data: Calendar): Boolean {
+                    return if (today.day == data.day) false
+                    else if (today.day + 1 == data.day && data.hour == 0) false
+                    else true
+                }
+
+                fun dataCol0Based(hour: Int): Int {
+                    return (hour - 1) % 6
+                }
+
+                fun stringForHour(hour: Int): String {
+                    return if (hour == 0) "12" else if (hour <= 12) hour.toString() else (hour - 12).toString()
+                }
                 item {
+
                     TitleCard(onClick = {},
                         modifier = Modifier.fillMaxWidth(),
                         backgroundPainter = blackPainter,
                         title = { Text("Today") }) {
-                        val cal = Calendar.getInstance()
-                        cal.timeInMillis = WW.current.currentDt
-                        val today = cal.day
+                        val caltoday = Calendar.getInstance()
+                        caltoday.timeInMillis = WW.current.currentDt
+                        val today = caltoday.day
                         var inx = 0;
+                        val caldata = Calendar.getInstance()
                         while (inx < WW.hourlys.size) {
                             val h = WW.hourlys.get(inx)
-                            cal.timeInMillis = h.date
-                            val day = cal.day
-                            if (today != day) break;
+                            caldata.timeInMillis = h.date
+                            val day = caldata.day
+                            if (needToBreak(caltoday, caldata)) break;
                             Row(
                                 horizontalArrangement = Arrangement.SpaceAround,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                val skip = (cal.hour - 1) % 6
+                                val skip = dataCol0Based(caldata.hour)
                                 for (i in (0..skip - 1)) {
                                     Column(
                                         horizontalAlignment = CenterHorizontally,
@@ -126,17 +142,17 @@ fun OpenWeatherMainApp(
                                 }
                                 do {
                                     val w = WW.hourlys[inx]
-                                    cal.timeInMillis = w.date
-                                    val hour = cal.hour
+                                    caldata.timeInMillis = w.date
+                                    val hour = caldata.hour
                                     Column(
                                         horizontalAlignment = CenterHorizontally,
                                     ) {
-                                        Text(if (hour <= 12) hour.toString() else (hour - 12).toString())
+                                        Text(stringForHour(hour))
                                         Text(w.temp.toInt().toString() + "\u00b0")
                                         RenderBitmap(w.bitmap)
                                     }
                                     inx++
-                                } while ((hour + 1) % 6 != 0)
+                                } while (dataCol0Based(hour + 1) != 0)
                             }
 
                         }
@@ -147,27 +163,27 @@ fun OpenWeatherMainApp(
                         modifier = Modifier.fillMaxWidth(),
                         backgroundPainter = blackPainter,
                         title = { Text("Tomorrow") }) {
-                        val cal = Calendar.getInstance()
-                        cal.timeInMillis = WW.current.currentDt
-                        var baseday = cal.day
+                        val caltoday = Calendar.getInstance()
+                        caltoday.timeInMillis = WW.current.currentDt
+                        val caldate = Calendar.getInstance()
                         var inx = 0;
                         while (inx < WW.hourlys.size) {
                             val h = WW.hourlys[inx]
-                            cal.timeInMillis = h.date
-                            if (baseday != cal.day) break;
+                            caldate.timeInMillis = h.date
+                            if (needToBreak(caltoday, caldate)) break;
                             inx++
                         }
-                        baseday = cal.day
+                        val tomorrowday = caldate.day
                         while (inx < WW.hourlys.size) {
                             val h = WW.hourlys.get(inx)
-                            cal.timeInMillis = h.date
-                            val day = cal.day
-                            if (baseday != day) break;
+                            caldate.timeInMillis = h.date
+                            val day = caldate.day
+                            if (tomorrowday != day) break;
                             Row(
                                 horizontalArrangement = Arrangement.SpaceAround,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                val skip = (cal.hour - 1) % 6
+                                val skip = dataCol0Based(caldate.hour)
                                 for (i in (0..skip - 1)) {
                                     Column(
                                         horizontalAlignment = CenterHorizontally,
@@ -177,17 +193,17 @@ fun OpenWeatherMainApp(
                                 }
                                 do {
                                     val w = WW.hourlys[inx]
-                                    cal.timeInMillis = w.date
-                                    val hour = cal.hour
+                                    caldate.timeInMillis = w.date
+                                    val hour = caldate.hour
                                     Column(
                                         horizontalAlignment = CenterHorizontally,
                                     ) {
-                                        Text(if (hour <= 12) hour.toString() else (hour - 12).toString())
+                                        Text(stringForHour(hour))
                                         Text(w.temp.toInt().toString() + "\u00b0")
                                         RenderBitmap(w.bitmap)
                                     }
                                     inx++
-                                } while ((hour + 1) % 6 != 0)
+                                } while (dataCol0Based(hour + 1) != 0)
                             }
 
                         }
@@ -232,81 +248,7 @@ fun OpenWeatherMainApp(
                         }
                     }
                 }
-//                            for (h in r) {
-//                                Column(
-//                                    horizontalAlignment = CenterHorizontally,
-//                                ) {
-//                                    Text(h.hour.toString())
-//                                    Text("foo")
-//                                    val bm = h.bitmap
-//                                    if (bm != null) Image(
-//                                        bitmap = h.bitmap.asImageBitmap(),
-//                                        "",
-//                                        alignment = Alignment.Center,
-//                                        modifier = Modifier.size(24.dp)
-//                                    )
-//                                }
-//                            }
-//                        }
-//                        Row(
-//                            horizontalArrangement = Arrangement.SpaceAround,
-//                            modifier = Modifier.fillMaxWidth()
-//                        ) {
-//                            for (h in r) {
-//                                Column(
-//                                    horizontalAlignment = CenterHorizontally,
-//                                ) {
-//                                    Text(
-//                                        text = h.hour.toString(),
-//                                        modifier = Modifier
-//                                            .padding(0.dp, 0.dp, 0.dp, 0.dp)
-//                                            .border(1.dp, Color.White)
-//                                    )
-//                                    Text("foo", modifier = Modifier.border(1.dp, Color.White))
-//                                    val bm = h.bitmap
-//                                    if (bm != null) Image(
-//                                        bitmap = h.bitmap.asImageBitmap(),
-//                                        "",
-//                                        alignment = Alignment.Center,
-//                                        modifier = Modifier
-//                                            .size(24.dp)
-//                                            .background(Color.Gray, CircleShape)
-//                                    )
-//                                }
-//                            }
             }
-//            item {
-//                val r by remember { row1 }
-//                LazyRow() {
-//                    items(r.size) { i ->
-//                        Column(
-//                            horizontalAlignment = CenterHorizontally,
-//                            modifier = Modifier.padding(4.dp, 0.dp, 4.dp, 0.dp)
-//                        ) {
-//                            val h = r[i]
-//                            Text(
-//                                text = h.hour.toString(),
-//                            )
-//                            Text(text = h.temp.toString(), textAlign = TextAlign.Center)
-//                            val bm = h.bitmap
-//                            if (bm != null) Image(
-//                                bitmap = h.bitmap.asImageBitmap(),
-//                                "",
-//                                alignment = Alignment.Center,
-//                                modifier = Modifier.size(24.dp)
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-
-//            item {
-//                Button(
-//                    onClick = { }, modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    Text(text = stringResource(id = R.string.query_mobile_camera))
-//                }
-//            }
         }
     }
 }

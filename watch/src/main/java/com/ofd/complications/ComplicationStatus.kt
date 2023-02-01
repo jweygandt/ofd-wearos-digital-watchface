@@ -21,7 +21,6 @@ import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
 import com.odbol.wear.airquality.purpleair.AirQualitySearch
 import com.ofd.watchface.location.WatchLocationService
-import com.ofd.openweather.OpenWeatherAQIService
 
 /**
  * When used in position 5 you can display debugging messages on the Watch Face
@@ -63,9 +62,7 @@ class ComplicationStatus : SuspendingComplicationDataSourceService() {
         val msg = wl.getShortAddress() + ":" +
             wl.callcnt.toString() + ":" + wl.successcnt.toString() + "\n" +
             AirQualitySearch.lastQueryData.aqi().toInt().toString() + ":" +
-            AirQualitySearch.statusString() + "\n" +
-            OpenWeatherAQIService.OpenWeatherAQIAPI.lastQueryData.aqi.toInt() + ":" +
-            OpenWeatherAQIService.OpenWeatherAQIAPI.statusString()
+            AirQualitySearch.statusString() + "\n"
 
 
         return when (request.complicationType) {
