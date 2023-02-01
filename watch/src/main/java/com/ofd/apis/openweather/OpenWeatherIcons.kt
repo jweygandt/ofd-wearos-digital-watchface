@@ -1,4 +1,4 @@
-package com.ofd.openweather
+package com.ofd.apis.openweather
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

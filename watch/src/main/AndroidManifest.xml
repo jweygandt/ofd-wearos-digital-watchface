@@ -258,7 +258,8 @@
         </service>
 
         <activity
-            android:name="com.ofd.openweather.OpenWeatherActivity"
+            android:name="com.ofd.apis.openweather.OpenWeatherActivity"
+            android:icon="@drawable/openweather"
             android:label="OpenWeather"
             android:exported="true">
             <intent-filter>
@@ -268,7 +269,8 @@
         </activity>
 
         <activity
-            android:name="com.ofd.openweather.OpenWeatherAQIActivity"
+            android:name="com.ofd.apis.openweather.OpenWeatherAQIActivity"
+            android:icon="@drawable/openweather"
             android:label="OpenWeatherAQI"
             android:exported="true">
             <intent-filter>

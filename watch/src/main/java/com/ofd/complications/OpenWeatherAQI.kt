@@ -23,9 +23,9 @@ import android.util.Log
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
-import com.ofd.openweather.AQIResult
-import com.ofd.openweather.OpenWeatherAQIActivity
-import com.ofd.openweather.getAQI
+import com.ofd.apis.AQIResult
+import com.ofd.apis.openweather.OpenWeatherAQIActivity
+import com.ofd.apis.openweather.openWeatherAQI
 import com.ofd.watch.R
 import com.ofd.watchface.location.WatchLocationService
 
@@ -58,9 +58,9 @@ class OpenWeatherAQI : SuspendingComplicationDataSourceService() {
 
         return getComplicationData(
             if (wl.valid) {
-                getAQI(applicationContext, wl.location)
+                openWeatherAQI(applicationContext, wl.location)
             } else {
-                AQIResult.Error("no location")
+                AQIResult.Error("OpenWeather","no location")
             }, request.complicationType
         )
     }
@@ -81,7 +81,7 @@ class OpenWeatherAQI : SuspendingComplicationDataSourceService() {
 
                     ComplicationType.SHORT_TEXT -> ShortTextComplicationData.Builder(
                         text = PlainComplicationText.Builder(
-                            text = aqiResult.aqi.toString() + " ppm"
+                            text = aqiResult.aqistr
                         ).build(),
                         contentDescription = PlainComplicationText.Builder(text = "AirQuality")
                             .build(),
@@ -90,7 +90,7 @@ class OpenWeatherAQI : SuspendingComplicationDataSourceService() {
                     ComplicationType.RANGED_VALUE -> {
                         val mx: Float
                         val mn: Float
-                        val value = aqiResult.aqi.toInt()
+                        val value = aqiResult.aqippm
                         val color = aqiResult.color - 1
                         if (value <= 50) {
                             mn = 0f

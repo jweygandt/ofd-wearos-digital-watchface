@@ -19,6 +19,10 @@ So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
 
+2/1/23 Refactoring of classes for APIs, OpenWeater and preparing for more. Found that OpenWeater's
+AQI API returns values differing with many other sources, so looking for alternatives. Currently
+Purple's still works well.
+
 1/30/23 Cleaned up refactoring (Note: the package name changed), tested the code and am using this
 version today. For the play/pause complication, got rid of the taponly mode as that was not really
 useful. Updated some icons. Added an activity of Open Weather (first cut). Fixed OpenWeatherAQI due
@@ -27,31 +31,36 @@ api keys for that, still free for limited use)
 
 # Play/Pause
 
-A really big feature added is the ability to pause/resume music with different methods. Imagine
-listening to Spotify, on a ski slope, mittens on. You really cannot navigate to Spotify, if needed,
-and then have the precision to tap the pause button. Right now by placing Virutal Play/Pause
-Complication in position 7 you can toggle it to 2 modes: 1)stop-disabled, 2)pause-tap and visibility
-enabled. So with tapenabled you simply tap the screen anywhere other than complicaiton 7 or the
-music playing icon and it will toggle play/pause. With visibility enabled, when the watch face
-becomes visible play pauses, and when not visible play resumes. Allowing you to run spotify the app,
-and use buttons to bring up watch face, and (customised) double press to go to last app.
-Pause/resume by the button push. I should note it needs the phone app installed on the phone, and it
-need to be started, but not necessarlly visible (actually that is a big hack right now as well). BE
-SURE TO DISABLE THE SOS MODE on the triple button press. The effort to get to the button with ski
-clothes on may not bring the watch out of ambient, so you must do a button press to achieve that.
-This means the resume music will be "press-pause-double-press", which sometimes is a triple press.
+A major feature is the ability to pause/resume music with different methods. Imagine listening to
+Spotify, on a ski slope, mittens on. You really cannot navigate to Spotify, if needed, and then have
+the precision to tap the pause button. Right now by placing Virutal Play/Pause Complication in
+position 7 you can toggle it to 2 modes: 1)stop-disabled, 2)tapenabled and visibility enabled. So
+with tap enabled you simply tap the screen anywhere other than complicaiton 7 or the music playing
+icon and it will toggle play/pause. With visibility enabled, when the watch face becomes visible
+play pauses, and when not visible play resumes. Allowing you to run spotify the app, and use buttons
+to bring up watch face, and (customised) double press to go to last app. Pause/resume by the button
+push. I should note it needs the phone app installed on the phone, and it need to be started, but
+not necessarlly visible (actually that is a big hack right now as well). BE SURE TO DISABLE THE SOS
+MODE on the triple button press. The effort to get to the button with ski clothes on may not bring
+the watch out of ambient, so you must do a button press to achieve that. This means the resume music
+will be "press-pause-double-press", which sometimes is a triple press.
 
 # Virtual Complications
 
 In the sense of location aware complications (described below), battery and the play/pause are
 special as well. So I have created my own version of Virtual Complications (VComps). Still a work in
-progress.
+progress. 
+
+They feature:
+* onClick handlers
+* methods for Range complcations to color, See AQI Complications
+* methods for data expiration (still testing)
 
 # Goals:
 
 * No data collection by 3rd parties, why should a watch face and complications send data to others?
 * Digital time to the second, with day-of-week and date
-* Location aware complications (seen more below)
+* Location aware complications (see more below)
 * As many complications as reasonably possible
   * 4 for display short text and icon
     * Weather, sunrise/sunset, battery, heartrate (I use mine, not Samsungs)
@@ -59,18 +68,16 @@ progress.
     * app and contacts shortcuts
   * 1 large multi-line text
     * calendar, which seems to have data hidden, thanks Samsung for your special API only you know
-      about!
+      about! Using ProWear Calender for now, but will work on a multi-event display
   * 2 range
     * Steps and AQI
   * 1 large full image background
     * Photo images of the moon phase
 
-* Currently this is for an audience of 1, so many shortcuts, if others are interested, I'm
-  interested in hearing from them.
-
-NOTE - this is still a HACK and WORK IN PROGRESS, but you are welcome to look at, copy, and perhaps
-suggest changes. I do use the watch face daily. I have not given much thought to the previews and
-various app/complication icons in editor mode, as I only use that briefly.
+Currently this is for an audience of 1, so many shortcuts, if others are interested, I'm interested
+in hearing from them. As such this is still a HACK and WORK IN PROGRESS, but you are welcome to look
+at, copy, and perhaps suggest changes. I do use the watch face daily. I have not given much thought
+to the previews and various app/complication icons in editor mode, as I only use that briefly.
 
 I noticed that images, called monochromatic... are really in full color, and that color could be
 supported. So why not. Also complication animations, like heartbeat.
@@ -79,24 +86,30 @@ I do wish Samsung did better with the complications they deliver, when used with
 faces, but they don't! So I'm also doing some complications myself. You can look at HonestHeartRate.
 Their calendar complication works differently in their watch faces as well!!
 
-As to editing - That seems more complex than it should. For a while I was using the phone app, and
-it worked, then suddenly most of the complications disappeared, even for Samsung's watchfaces! So I
-have buttons. It's functional, that's about all that can be said.
+As to editing complications: For a while I was using the phone app, and it worked, then suddenly
+most of the complications disappeared, even for Samsung's watchfaces! So I have buttons. It's
+functional, that's about all that can be said. After several weeks, they appear to be back on the
+phone.
 
 I tried https://github.com/google/where-am-i and realized that locations don't update very
 reliabily. Tested on Galaxy Watch 5. Perhaps some power/permission management for complications,
 likely througly undocumented (if not I'd like to read about it). I have seen that location works
-fine, if Priority is set correctly (e.g. LocationRequest.PRIORITY_HIGH_ACCURACY), if it is run in
-the process of the WatchFace. Unfortunately that means the complications cannot be standalone.
+fine, if it is run in the process of the WatchFace, provided Priority is set correctly (e.g.
+LocationRequest.PRIORITY_HIGH_ACCURACY). Unfortunately that means the complications cannot be
+standalone.
 
-Included are Sunrise/Sunset and 2 different AQI methods. I'm currently using OpenWeatherAQI. There
-is a weather complication based on OpenWeather that uses location all the time, but does not report
-to 3rd parties. A tap will bring up extended forecast, still working on that. There is also some
-long text complications for testing.
+Complications included:
+* Sunrise/Sunset
+* VirtualComplicationPlayPause
+* PurpleAQI
+* OpenWeatherAQI (seems to not agree with other sources)
+* OpenWeather
+* Less used now: Where LocationTest, ComplicationStatus
 
-Also I decided to have some fun with rendering the range complications, by providing some URL like
-parameters, see the AQI complications. Working on pulling these parameters out into first
-class VirtualComplication arguments of sorts.
+Activities
+* OpenWeatherAQIActivity (touch on OpenWeatherAQI)
+* OpenWeaterActivity (touch on OpenWeather)
+* Less used: WhereAmI
 
 Thanks to:
 
@@ -109,6 +122,10 @@ Thanks to:
 * Of course google and wear-os and samples
 * Less to Samsung for doing thier own version of Virtual Complications, although I'm sure they
   partnered with Google for wear-os, and of course the hardware
+* Thanks for making APIs public:
+  * Purple Air
+  * OpenWeather
+  * AirVisual (still working on that)
 
 So still lots to do, but I'm making it public as there are so few wear os open source projects so
 far.
@@ -122,6 +139,9 @@ You will need a res/values/api_kes.xml like this (in .gitignore):
   <string name="purpleair_api_key_write">XXX</string>
 
   <string name="openweather_appid">XXX</string>
+
+  <string name="airvisual_appid" translatable="false"></string>
+
 </resources>
 ```
 

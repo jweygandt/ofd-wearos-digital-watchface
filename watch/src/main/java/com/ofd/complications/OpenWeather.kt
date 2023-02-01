@@ -23,9 +23,9 @@ import android.util.Log
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
-import com.ofd.openweather.OpenWeatherActivity
-import com.ofd.openweather.WeatherResult
-import com.ofd.openweather.getWeather
+import com.ofd.apis.WeatherResult
+import com.ofd.apis.openweather.OpenWeatherActivity
+import com.ofd.apis.openweather.OpenWeatherService3
 import com.ofd.watch.R
 import com.ofd.watchface.location.WatchLocationService
 
@@ -34,6 +34,8 @@ import com.ofd.watchface.location.WatchLocationService
  */
 class OpenWeather : SuspendingComplicationDataSourceService() {
 
+
+    private val api = OpenWeatherService3()
 
     companion object {
         private const val TAG = "OpenWeather"
@@ -60,9 +62,9 @@ class OpenWeather : SuspendingComplicationDataSourceService() {
 
         return getComplicationData(
             if (wl.valid) {
-                getWeather(applicationContext, wl.location)
+                api.get(applicationContext, wl.location)
             } else {
-                WeatherResult.Error("no valid location")
+                WeatherResult.Error("OpenWeather", "no valid location")
             }, request.complicationType
         )
     }
