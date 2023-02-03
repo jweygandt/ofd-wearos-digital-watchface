@@ -25,7 +25,7 @@ import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
 import com.ofd.apis.WeatherResult
 import com.ofd.apis.openweather.OpenWeatherActivity
-import com.ofd.apis.openweather.OpenWeatherService3
+import com.ofd.apis.openweather.openWeather
 import com.ofd.watch.R
 import com.ofd.watchface.location.WatchLocationService
 
@@ -33,9 +33,6 @@ import com.ofd.watchface.location.WatchLocationService
  * Not yet complete...
  */
 class OpenWeather : SuspendingComplicationDataSourceService() {
-
-
-    private val api = OpenWeatherService3()
 
     companion object {
         private const val TAG = "OpenWeather"
@@ -62,7 +59,7 @@ class OpenWeather : SuspendingComplicationDataSourceService() {
 
         return getComplicationData(
             if (wl.valid) {
-                api.get(applicationContext, wl.location)
+                openWeather(applicationContext, wl.location)
             } else {
                 WeatherResult.Error("OpenWeather", "no valid location")
             }, request.complicationType
@@ -72,37 +69,40 @@ class OpenWeather : SuspendingComplicationDataSourceService() {
     private fun getComplicationData(
         weatherResult: WeatherResult, complicationType: ComplicationType
     ): ComplicationData? {
-        when (weatherResult) {
-            is WeatherResult.Weather -> {
-                Log.d(TAG, "Results: " + weatherResult.statusString())
-                val current = weatherResult.current
-                val image = MonochromaticImage.Builder(
-                    current.currentIcon ?: Icon.createWithResource(
-                        applicationContext, R.drawable.openweather
-                    )
-                ).build()
-                return when (complicationType) {
+        if (complicationType == ComplicationType.SHORT_TEXT) {
+            return when (weatherResult) {
+                is WeatherResult.Weather -> {
+                    Log.d(TAG, "Results: " + weatherResult.statusString())
+                    val current = weatherResult.current
+                    val image = MonochromaticImage.Builder(
+                        current.currentIcon ?: Icon.createWithResource(
+                            applicationContext, R.drawable.openweather
+                        )
+                    ).build()
 
-                    ComplicationType.SHORT_TEXT -> ShortTextComplicationData.Builder(
+                    ShortTextComplicationData.Builder(
                         text = PlainComplicationText.Builder(
                             text = current.currentTemp.toInt()
-                                .toString() + "\u00b0" + "?ExpiresMS=" + (System.currentTimeMillis() + 30 * 60 * 1000)
+                                .toString() + "\u00b0" + "?ExpiresMS=" + (weatherResult.current.currentDt + 30 * 60 * 1000)
                         ).build(),
                         contentDescription = PlainComplicationText.Builder(text = "AirQuality")
                             .build(),
                     ).setMonochromaticImage(image).setTapAction(tapAction()).build()
+                }
 
-                    else -> {
-                        Log.w(TAG, "Unexpected complication type $complicationType")
-                        null
-                    }
+                is WeatherResult.Error -> {
+                    ShortTextComplicationData.Builder(
+                        text = PlainComplicationText.Builder(
+                            text = weatherResult.msg + "?ExpiresMS=" + (System.currentTimeMillis() + 30 * 60 * 1000)
+                        ).build(),
+                        contentDescription = PlainComplicationText.Builder(text = "AirQuality")
+                            .build(),
+                    ).setTapAction(tapAction()).build()
                 }
             }
-
-            is WeatherResult.Error -> {
-                Log.e(TAG, "No weather: " + weatherResult.msg)
-                return null
-            }
+        } else {
+            Log.w(TAG, "Unexpected complication type $complicationType")
+            return null
         }
     }
 

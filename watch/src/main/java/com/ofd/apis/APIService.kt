@@ -5,7 +5,6 @@ import android.util.Log
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.ofd.watchface.location.ResolvedLocation
 import java.io.InputStreamReader
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -23,7 +22,7 @@ class APIMetrics {
 }
 
 
-abstract class APIService<Result>() {
+abstract class APIService<Result> {
 
     val TAG = this.javaClass.simpleName
 
@@ -38,14 +37,14 @@ abstract class APIService<Result>() {
 
     abstract val appidR: Int
     var valueRetentionMs = TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)
-    abstract fun makeURL(rlocation: ResolvedLocation, appid: String?): URL
+    abstract fun makeURL(location: APILocation, appid: String?): URL
     abstract fun makeErrorResult(s: String): Result
     abstract fun isErrorResult(r: Result): Boolean
     abstract suspend fun makeResult(
-        resolvedLocation: ResolvedLocation, fulljson: String, top: JsonObject
+        location: APILocation, fulljson: String, top: JsonObject
     ): Result
 
-    suspend fun get(context: Context, location: ResolvedLocation): Result {
+    suspend fun get(context: Context, location: APILocation): Result {
         if (appid == null) appid = context.getString(appidR)
         metrics.metricNumCalls.incrementAndGet()
         Log.d(TAG, "Getting AQI: " + location.toString())
@@ -63,23 +62,25 @@ abstract class APIService<Result>() {
             return lastQueryData
         }
 
-        return withContext(Dispatchers.IO) {
-            getAQIInternal(location).apply {
-                callInProgress.set(false)
-                if (!isErrorResult(this)) {
-                    lastQueryData = this
-                    lastQueryTimeMs = now
+        try {
+            return withContext(Dispatchers.IO) {
+                getInternal(location).apply {
+                    if (!isErrorResult(this)) {
+                        lastQueryData = this
+                        lastQueryTimeMs = now
+                    }
                 }
             }
+        } finally {
+            callInProgress.set(false)
         }
     }
 
-    private suspend fun getAQIInternal(resolvedLocation: ResolvedLocation): Result {
+    private suspend fun getInternal(location: APILocation): Result {
         try {
-            Log.d(TAG, "getAQI $resolvedLocation")
+            Log.d(TAG, "getAQI $location")
 
-            val location = resolvedLocation.location!!
-            val url = makeURL(resolvedLocation, appid)
+            val url = makeURL(location, appid)
             val reader = InputStreamReader(url.openConnection().getInputStream())
             val fulljson = reader.readText()
             reader.close()
@@ -90,7 +91,7 @@ abstract class APIService<Result>() {
                 val gson = GsonBuilder().setPrettyPrinting().create()
                 Log.d(TAG, "JSON: " + gson.toJson(top))
             }
-            return makeResult(resolvedLocation, fulljson, top)
+            return makeResult(location, fulljson, top)
         } catch (e: java.lang.Exception) {
             Log.e(TAG, "Problems: " + e.message, e)
             return makeErrorResult(e.message ?: "null")

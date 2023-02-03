@@ -6,6 +6,7 @@ import android.util.Log
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.ofd.apis.APILocation
 import com.ofd.apis.APIService
 import com.ofd.apis.WeatherResult
 import com.ofd.watch.R
@@ -17,15 +18,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private val api = OpenWeatherService3()
+suspend fun openWeather(context: Context, location: APILocation) = openWeatherAPI.get(context, location)
 
-suspend fun openWeather(context: Context, location: ResolvedLocation) = api.get(context, location)
+val openWeatherAPI = object : APIService<WeatherResult>() {
 
-class OpenWeatherService3 : APIService<WeatherResult>() {
     override val appidR = R.string.openweather_appid
 
-    override fun makeURL(rlocation: ResolvedLocation, appid: String?): URL {
-        val location = rlocation.location!!
+    override fun makeURL(location :APILocation, appid: String?): URL {
         return URL(
             OPENWEATHER3 + "lat=${location.latitude}&lon=${location.longitude}&appid=$appid&exclude=minutely&units=imperial"
         )
@@ -40,13 +39,13 @@ class OpenWeatherService3 : APIService<WeatherResult>() {
     }
 
     private val OPENWEATHER3 = "https://api.openweathermap.org/data/3.0/onecall?"
-    override suspend fun makeResult(rlocation: ResolvedLocation, fulljson: String, top: JsonObject): WeatherResult {
+    override suspend fun makeResult(location: APILocation, fulljson: String, top: JsonObject): WeatherResult {
             val lat = top.getAsJsonPrimitive("lat").asDouble
             val lon = top.getAsJsonPrimitive("lon").asDouble
 
             //https://maps.googleapis.com/maps/api/geocode/json?latlng=37.4219983,-122.084&sensor=true&key=xxx
             val address = try {
-                rlocation.getShortAddress()
+                location.getShortAddress()
             } catch (e: Exception) {
                 null
             }

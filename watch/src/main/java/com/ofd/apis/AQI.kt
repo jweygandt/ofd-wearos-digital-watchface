@@ -3,18 +3,17 @@ package com.ofd.apis
 import com.ofd.watchface.location.ResolvedLocation
 import com.thanglequoc.aqicalculator.AQICalculator
 import com.thanglequoc.aqicalculator.Pollutant
-import java.util.concurrent.atomic.AtomicInteger
 
 
 private val calculator: AQICalculator = AQICalculator.getAQICalculatorInstance()
 
-sealed class AQIResult() {
+sealed class AQIResult {
     class AQI : AQIResult {
 
         constructor(
             source: String,
             metrics: APIMetrics,
-            rlocation: ResolvedLocation,
+            location: APILocation,
             fulljsonn: String,
             date: Long,
             color: Int,
@@ -22,7 +21,7 @@ sealed class AQIResult() {
         ){
             this.source = source
             this.metrics = metrics
-            this.rlocation = rlocation
+            this.location = location
             this.fulljsonn = fulljsonn
             this.date = date
             this.color = color
@@ -39,7 +38,7 @@ sealed class AQIResult() {
 
         val source: String
         val metrics: APIMetrics
-        val rlocation: ResolvedLocation
+        val location: APILocation
         val fulljsonn: String
         val date: Long
         val color: Int
@@ -47,7 +46,7 @@ sealed class AQIResult() {
         val aqippm: Int
         val aqistr: String
 
-        public val address: String? = null
+        val address: String? = null
 
         fun colorInxForComp(comp: String, v: Float): Int {
             fun inx(f0: Float, f1: Float, f2: Float, f3: Float, f4: Float = f3): Int {

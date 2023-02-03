@@ -6,20 +6,21 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import com.ofd.watchface.location.LocationViewModel
 import com.ofd.watchface.location.ResolvedLocation
 import kotlinx.coroutines.launch
 
-abstract class APIActivity<Result> : ComponentActivity() {
+abstract class APIActivity<Result>(private val service: APIService<Result>) : ComponentActivity() {
 
-    abstract fun makeErrorResult(s: String): Result
-
-    abstract suspend fun getData(context: Context, location: ResolvedLocation): Result
-
+//    abstract fun makeErrorResult(s: String): Result
+//
+//    abstract suspend fun getData(context: Context, location: ResolvedLocation): Result
+//
     @Composable
-    abstract fun doContent(): Unit
+    abstract fun doContent(data: MutableState<Result?>): Unit
 
     val data = mutableStateOf<Result?>(null)
 
@@ -28,7 +29,7 @@ abstract class APIActivity<Result> : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContent { doContent() }
+        setContent { doContent(data) }
     }
 
     override fun onResume() {
@@ -38,17 +39,14 @@ abstract class APIActivity<Result> : ComponentActivity() {
                 TAG, applicationContext
             ).readLocationResult()
             val r = if (rlocation is ResolvedLocation) {
-                getData(applicationContext, rlocation)
+                service.get(applicationContext, rlocation)
             } else {
-                makeErrorResult(rlocation.toString())
+                service.makeErrorResult(rlocation.toString())
             }
             Log.d(TAG, "New value: " + r.toString())
             data.value = r
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-    }
 }
 

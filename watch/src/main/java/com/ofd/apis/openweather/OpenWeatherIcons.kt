@@ -31,7 +31,7 @@ suspend fun getIcon(iname: String): Icon? {
     return icon
 }
 
-suspend private fun loadImage(iname: String) {
+private suspend fun loadImage(iname: String) {
     withContext(Dispatchers.IO) {
         Log.d(TAG, "Reading image: " + iname)
         try {

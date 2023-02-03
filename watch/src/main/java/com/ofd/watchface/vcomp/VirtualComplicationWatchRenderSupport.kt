@@ -11,10 +11,10 @@ import kotlinx.coroutines.CoroutineScope
  * .CanvasRenderer2 class should also implement this class
  */
 interface VirtualComplicationWatchRenderSupport {
-    abstract val messageClient: MessageClient
-    abstract val capabilityClient: CapabilityClient
-    abstract val scope: CoroutineScope
-    abstract val context: Context
-    abstract val currentUserStyleRepository : CurrentUserStyleRepository?
+    val messageClient: MessageClient
+    val capabilityClient: CapabilityClient
+    val scope: CoroutineScope
+    val context: Context
+    val currentUserStyleRepository : CurrentUserStyleRepository?
 }
 

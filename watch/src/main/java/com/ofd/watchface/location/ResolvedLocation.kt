@@ -15,6 +15,7 @@ package com.ofd.watchface.location
 
 import android.location.Location
 import android.text.format.DateUtils
+import com.ofd.apis.APILocation
 import com.patloew.colocation.CoGeocoder
 
 sealed class LocationResult {
@@ -38,12 +39,12 @@ object NoLocation : LocationResult()
 data class LocationError(val e: Exception) : LocationResult()
 
 data class ResolvedLocation(val location: Location?, private val coGeocoder: CoGeocoder?) :
-    LocationResult() {
+    LocationResult(), APILocation {
 
-    val latitude: Double
+    override val latitude: Double
         get() = if (location != null) location.latitude else 0.0
 
-    val longitude: Double
+    override val longitude: Double
         get() = if (location != null) location.longitude else 0.0
 
     val timeAgo: CharSequence
@@ -56,7 +57,7 @@ data class ResolvedLocation(val location: Location?, private val coGeocoder: CoG
             location
         ) else null
 
-    suspend fun getShortAddress(): String {
+    override suspend fun getShortAddress(): String {
         val address = getAddress()
         if (address == null) return "Null Island"
         val city = address.locality

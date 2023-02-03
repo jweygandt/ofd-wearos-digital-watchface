@@ -89,7 +89,7 @@ class WatchLocationService {
                     } else {
                         Log.e(TAG, "Problems getting location: $location")
                     }
-                    Log.d(WhereAmIActivity.TAG, "render:launch():location=$location")
+                    Log.d(TAG, "render:launch():location=$location")
                     Complications.forceComplicationUpdate(context, complicationSlotsManagerHolder)
                 }
             }

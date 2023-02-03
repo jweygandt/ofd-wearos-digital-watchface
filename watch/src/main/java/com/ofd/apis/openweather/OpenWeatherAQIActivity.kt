@@ -15,41 +15,25 @@
  */
 package com.ofd.apis.openweather
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.*
 import com.ofd.apis.APIActivity
 import com.ofd.apis.AQIResult
-import com.ofd.apis.WeatherResult
-import com.ofd.watchface.location.ResolvedLocation
 import java.text.SimpleDateFormat
 
 
-class OpenWeatherAQIActivity : APIActivity<AQIResult>() {
+class OpenWeatherAQIActivity : APIActivity<AQIResult>(openWeatherAQIService) {
 
-
-    override fun makeErrorResult(s: String): AQIResult {
-        return AQIResult.Error(TAG, s)
-    }
-
-    override suspend fun getData(context: Context, location: ResolvedLocation): AQIResult {
-        return openWeatherAQI(context, location)
-    }
 
     @Composable
-    override fun doContent() {
+    override fun doContent(data: MutableState<AQIResult?>) {
         val scalingLazyListState = rememberScalingLazyListState(0, 0)
 
         val lazyRowState = rememberLazyListState()
@@ -98,7 +82,7 @@ class OpenWeatherAQIActivity : APIActivity<AQIResult>() {
                             modifier = Modifier.padding(10.dp, 50.dp, 0.dp, 0.dp)
                         )
                     }
-                } else if(WW is AQIResult.AQI) {
+                } else if (WW is AQIResult.AQI) {
                     item { Text(WW.address ?: "not set") }
                     item {
                         TitleCard(onClick = {},
