@@ -2,39 +2,66 @@ package com.ofd.apis.openweather
 
 import android.content.Context
 import com.google.gson.JsonObject
-import com.ofd.apis.APILocation
-import com.ofd.apis.APIService
-import com.ofd.apis.AQIResult
+import com.ofd.apis.*
 import com.ofd.watch.R
 import com.ofd.watchface.location.ResolvedLocation
+import com.thanglequoc.aqicalculator.AQICalculator
+import com.thanglequoc.aqicalculator.Pollutant
 import java.net.URL
 
 suspend fun openWeatherAQI(context: Context, location: ResolvedLocation) =
-    openWeatherAQIService.get(context, location)
+    OpenWeatherAQIService.get(context, location)
 
-val openWeatherAQIService =object : APIService<AQIResult>() {
+object OpenWeatherAQIService : AQIService<OpenWeatherAQIService.OpenWeatherAQIDetails>() {
 
     private val OPENWEATHER_AIR_QUALITY = "http://api.openweathermap.org/data/2.5/air_pollution?"
 
-    override val appidR = R.string.openweather_appid
+    val appidR = R.string.openweather_appid
+    var appid: String? = null
 
-    override fun makeURL(location: APILocation, appid: String?): URL {
+    class OpenWeatherAQIDetails(
+        val location: APILocation,
+        val fulljsonn: String,
+        val date: Long,
+        val color: Int,
+        val comps: Map<String, Float>
+    ) : AQIDetails {
+
+        val aqippm: Int
+        val aqistr: String
+        val address: String? = null
+
+        init {
+            if (comps.containsKey("pm2_5")) {
+                aqippm = AQIResult.AQI.aqiCalculator.getAQI(
+                    Pollutant.PM25, comps.get("pm2_5")!!.toDouble()
+                ).aqi
+                aqistr = aqippm.toString() + " ppm"
+            } else {
+                this.aqippm = 0
+                this.aqistr = "??"
+            }
+        }
+
+        override val shortText get() = aqistr
+        override val rangeValue get() = aqippm.toFloat()
+        override val rangeText get() = shortText
+
+
+    }
+
+    override fun makeURL(context: Context, location: APILocation): URL {
+        if (appid == null) {
+            appid = context.getString(OpenWeatherAPI.appidR)
+        }
         return URL(
             OPENWEATHER_AIR_QUALITY + "lat=${location.latitude}&lon=${location.longitude}&appid=$appid"
         )
     }
 
-    override fun makeErrorResult(s: String): AQIResult {
-        return AQIResult.Error(TAG, s)
-    }
-
-    override fun isErrorResult(r: AQIResult): Boolean {
-        return r is AQIResult.Error
-    }
-
     override suspend fun makeResult(
         location: APILocation, fulljson: String, top: JsonObject
-    ): AQIResult {
+    ): AQIResult<OpenWeatherAQIDetails> {
 
         val lst = top.getAsJsonArray("list")[0].asJsonObject
         val aqi = lst.getAsJsonObject("main").getAsJsonPrimitive("aqi").asInt
@@ -48,8 +75,7 @@ val openWeatherAQIService =object : APIService<AQIResult>() {
         val date = lst.getAsJsonPrimitive("dt").asLong * 1000
 
         return AQIResult.AQI(
-            "OpenWeather", metrics, location, fulljson, date, aqi, cmap
+            "OpenWeather", OpenWeatherAQIDetails(location, fulljson, date, aqi, cmap), metrics
         )
     }
-
 }

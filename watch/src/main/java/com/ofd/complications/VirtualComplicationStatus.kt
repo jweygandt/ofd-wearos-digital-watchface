@@ -22,6 +22,7 @@ import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import com.ofd.watchface.digital12.D12
+import com.ofd.watchface.vcomp.ICON_BACKGROUND
 import com.ofd.watchface.vcomp.VirtualComplication
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -55,6 +56,8 @@ class VirtualComplicationStatusImpl : VirtualComplication {
     override val expiresms: Long
         get() = -1
 
+    override val iconBackground: ICON_BACKGROUND
+        get() = ICON_BACKGROUND.NONE
 }
 
 class VirtualComplicationStatus : ComplicationDataSourceService() {

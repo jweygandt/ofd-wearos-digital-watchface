@@ -25,8 +25,7 @@ import java.time.ZonedDateTime
 class ComplicationWrapper(private val slot: ComplicationSlot) {
 
     fun virtualComplication(
-        watch: VirtualComplicationWatchRenderSupport,
-        instant: Instant?
+        watch: VirtualComplicationWatchRenderSupport, instant: Instant?
     ): VirtualComplication {
         val cls = slot.complicationData.value.dataSource?.className
         if (cls != null) {
@@ -36,25 +35,19 @@ class ComplicationWrapper(private val slot: ComplicationSlot) {
                     watch
                 )
             }
-            if (cls.endsWith("BatteryProviderService"))
-                return VirtualBatteryComplicationImpl(
-                    slot,
-                    watch,
-                    instant
-                )
+            if (cls.endsWith("BatteryProviderService")) return VirtualBatteryComplicationImpl(
+                slot, watch, instant
+            )
         }
         return StandardComplication(slot, watch, instant)
     }
-
 
     val enabled get() = slot.enabled
 
     val id get() = slot.id
 
     fun renderHighlightLayer(
-        canvas: Canvas,
-        zonedDateTime: ZonedDateTime,
-        renderParameters: RenderParameters
+        canvas: Canvas, zonedDateTime: ZonedDateTime, renderParameters: RenderParameters
     ) {
         slot.renderHighlightLayer(canvas, zonedDateTime, renderParameters)
     }
@@ -64,12 +57,9 @@ class ComplicationWrapper(private val slot: ComplicationSlot) {
     }
 
     fun defaultRender(
-        canvas: Canvas,
-        zonedDateTime: ZonedDateTime,
-        renderParameters: RenderParameters
+        canvas: Canvas, zonedDateTime: ZonedDateTime, renderParameters: RenderParameters
     ) {
         slot.render(canvas, zonedDateTime, renderParameters)
     }
-
 }
 

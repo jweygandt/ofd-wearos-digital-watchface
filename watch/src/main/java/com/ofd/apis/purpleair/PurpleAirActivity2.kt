@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.apis.openweather
+package com.ofd.apis.purpleair
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -26,14 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.*
 import com.ofd.apis.APIActivity
 import com.ofd.apis.AQIResult
+import com.thanglequoc.aqicalculator.Pollutant
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 
-
-class OpenWeatherAQIActivity : APIActivity<AQIResult<OpenWeatherAQIService.OpenWeatherAQIDetails>>(OpenWeatherAQIService) {
-
+class PurpleAirActivity2 :
+    APIActivity<AQIResult<PurpleAirService2.PurpleAirAQIDetails>>(PurpleAirService2) {
 
     @Composable
-    override fun doContent(data: MutableState<AQIResult<OpenWeatherAQIService.OpenWeatherAQIDetails>?>) {
+    override fun doContent(data: MutableState<AQIResult<PurpleAirService2.PurpleAirAQIDetails>?>) {
         val scalingLazyListState = rememberScalingLazyListState(0, 0)
 
         val lazyRowState = rememberLazyListState()
@@ -85,6 +86,9 @@ class OpenWeatherAQIActivity : APIActivity<AQIResult<OpenWeatherAQIService.OpenW
                 } else if (WW is AQIResult.AQI) {
                     item { Text(WW.details.address ?: "not set") }
                     item {
+                        val nf = NumberFormat.getInstance()
+                        nf.maximumFractionDigits=1
+                        nf.minimumFractionDigits=1
                         TitleCard(onClick = {},
                             modifier = Modifier.fillMaxWidth(),
                             title = { Text(sdffull.format(WW.details.date)) }) {
@@ -93,23 +97,33 @@ class OpenWeatherAQIActivity : APIActivity<AQIResult<OpenWeatherAQIService.OpenW
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text("aqi: ")
-                                Text(WW.details.aqistr + "ppm")
+                                Text(WW.details.aqistr)
                             }
-                            for ((comp, v) in WW.details.comps) {
+                            var inx = 0
+                            for (s in WW.details.samples) {
                                 Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text("${comp}: ")
-                                    Text(
-                                        v.toString(), color = textcolors[AQIResult.AQI.colorInxForComp(
-                                            comp, v
-                                        )], modifier = Modifier.background(
-                                            colors[AQIResult.AQI.colorInxForComp(
-                                                comp, v
-                                            )]
+                                    horizontalArrangement = Arrangement.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            if (inx == WW.details.medianInx) Color.Red else Color.DarkGray
                                         )
+                                ) {
+                                    val aqi = AQIResult.AQI.aqiCalculator.getAQI(
+                                        Pollutant.PM25, s.pm25
+                                    ).aqi
+                                    val cinx = AQIResult.AQI.colorInxForComp("aqi", aqi.toFloat())
+                                    Text(
+                                        aqi.toString() + " ",
+                                        color = textcolors[cinx],
+                                        modifier = Modifier.background(colors[cinx])
                                     )
+                                    Text(
+                                        "(" + nf.format(s.distanceMeters/1000f)
+                                            .toString() + ") "
+                                    )
+                                    Text(s.name ?: "no name")
+                                    inx++
                                 }
                             }
                         }

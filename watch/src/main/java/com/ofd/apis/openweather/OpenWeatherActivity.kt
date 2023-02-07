@@ -15,11 +15,13 @@
  */
 package com.ofd.apis.openweather
 
-import android.content.Context
 import android.graphics.Bitmap
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +30,7 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
@@ -40,14 +43,13 @@ import com.ofd.apis.APIActivity
 import com.ofd.apis.FakeLocation
 import com.ofd.apis.WeatherResult
 import com.ofd.watch.R
-import com.ofd.watchface.location.ResolvedLocation
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.runBlocking
 
 
-class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
+class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
 
     @Composable
     override fun doContent(data: MutableState<WeatherResult?>) {
@@ -122,13 +124,18 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
 
             val sdffull = SimpleDateFormat("MM/dd HH:mm")
 
-            val blackPainter =
-                CardDefaults.cardBackgroundPainter(Color.Black, Color.Black, LayoutDirection.Ltr)
+            val cardBackgroundPainter =
+                CardDefaults.cardBackgroundPainter(Color.Gray, Color.Gray, LayoutDirection.Ltr)
+            val textColor = Color.Green
 
             Scaffold(vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) },
                 positionIndicator = { PositionIndicator(scalingLazyListState = scalingLazyListState) },
-                modifier = Modifier.background(Color.DarkGray),
-                timeText = { TimeText() }) {
+//                modifier = Modifier.background(Color.DarkGray),
+                timeText = {
+                    TimeText(
+                        timeTextStyle = TimeTextDefaults.timeTextStyle()
+                            .merge(TextStyle(color = textColor))
+                    ) }) {
 
                 var W by remember { data }
 
@@ -153,14 +160,17 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
                     if (WW == null) {
                         item {
                             Text(
-                                "Loading...", modifier = Modifier.padding(10.dp, 50.dp, 0.dp, 0.dp)
+                                "Loading...",
+                                modifier = Modifier.padding(10.dp, 50.dp, 0.dp, 0.dp),
+                                color = textColor
                             )
                         }
                     } else if (WW is WeatherResult.Error) {
                         item {
                             Text(
                                 WW.source + " " + WW.msg,
-                                modifier = Modifier.padding(10.dp, 50.dp, 0.dp, 0.dp)
+                                modifier = Modifier.padding(10.dp, 50.dp, 0.dp, 0.dp),
+                                color = textColor
                             )
                         }
                     } else if (WW is WeatherResult.Weather) {
@@ -169,13 +179,14 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
                                 Text(
                                     text = WW.address,
                                     modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 10.dp),
-                                    fontSize = 20.sp
+                                    fontSize = 20.sp,
+                                    color = textColor
                                 )
                             }
                         }
                         item {
                             TitleCard(onClick = {},
-                                backgroundPainter = blackPainter,
+                                backgroundPainter = cardBackgroundPainter,
                                 modifier = Modifier.fillMaxWidth(),
                                 title = { Text(sdffull.format(WW.current.currentDt)) }) {
                                 Row(
@@ -183,8 +194,11 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
 
-                                    Text(WW.current.currentTemp.toInt().toString() + "\u00b0")
-                                    Text(WW.current.descr)
+                                    Text(
+                                        WW.current.currentTemp.toInt().toString() + "\u00b0",
+                                        color = textColor
+                                    )
+                                    Text(WW.current.descr, color = textColor)
                                     RenderBitmap(live, WW.current.currentBitmap)
                                 }
                             }
@@ -205,7 +219,7 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
 
                             TitleCard(onClick = {},
                                 modifier = Modifier.fillMaxWidth(),
-                                backgroundPainter = blackPainter,
+                                backgroundPainter = cardBackgroundPainter,
                                 title = { Text("Today") }) {
                                 val caltoday = Calendar.getInstance()
                                 caltoday.timeInMillis = WW.current.currentDt
@@ -245,11 +259,23 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
 //                                        Text(w.temp.toInt().toString() + "\u00b0")
 //                                        RenderBitmap(w.bitmap)
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    Text(stringForHour(hour), fontSize = 12.sp)
+                                                    Text(
+                                                        stringForHour(hour),
+                                                        fontSize = 12.sp,
+                                                        color = textColor
+                                                    )
                                                     RenderBitmap(live, w.bitmap, 18)
                                                 }
-                                                Text(w.temp.toInt().toString() + "\u00b0")
-                                                Text((w.pop * 100).toInt().toString() + "%")
+                                                Text(
+                                                    w.temp.toInt().toString() + "\u00b0",
+                                                    color = textColor
+                                                )
+                                                val pct = (w.pop * 100).toInt()
+                                                Text(
+                                                    (w.pop * 100).toInt().toString() + "%",
+                                                    fontSize = if (pct == 100) 12.sp else 14.sp,
+                                                    color = textColor
+                                                )
                                             }
                                             inx++
                                         } while (dataCol0Based(hour + 1) != 0)
@@ -262,7 +288,7 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
                         item {
                             TitleCard(onClick = {},
                                 modifier = Modifier.fillMaxWidth(),
-                                backgroundPainter = blackPainter,
+                                backgroundPainter = cardBackgroundPainter,
                                 title = { Text("Tomorrow") }) {
                                 val caltoday = Calendar.getInstance()
                                 caltoday.timeInMillis = WW.current.currentDt
@@ -311,8 +337,16 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
                                                     Text(stringForHour(hour), fontSize = 12.sp)
                                                     RenderBitmap(live, w.bitmap, 18)
                                                 }
-                                                Text(w.temp.toInt().toString() + "\u00b0")
-                                                Text((w.pop * 100).toInt().toString() + "%")
+                                                Text(
+                                                    w.temp.toInt().toString() + "\u00b0",
+                                                    color = textColor
+                                                )
+                                                val pct = (w.pop * 100).toInt()
+                                                Text(
+                                                    (w.pop * 100).toInt().toString() + "%",
+                                                    fontSize = if (pct == 100) 12.sp else 14.sp,
+                                                    color = textColor
+                                                )
                                             }
                                             inx++
                                         } while (dataCol0Based(hour + 1) != 0)
@@ -325,7 +359,7 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
                         item {
                             TitleCard(onClick = {},
                                 modifier = Modifier.fillMaxWidth(),
-                                backgroundPainter = blackPainter,
+                                backgroundPainter = cardBackgroundPainter,
                                 title = { Text("Future") }) {
                                 val cal = Calendar.getInstance()
                                 var inx = 0
@@ -346,16 +380,27 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(openWeatherAPI) {
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                 modifier = Modifier
                                             ) {
-                                                Text(date.toString())
-                                                Text(w.tempMax.toInt().toString() + "\u00b0")
-                                                Text(w.tempMin.toInt().toString() + "\u00b0")
+                                                Text(date.toString(), color = textColor)
+                                                Text(
+                                                    w.tempMax.toInt().toString() + "\u00b0",
+                                                    color = textColor
+                                                )
+                                                Text(
+                                                    w.tempMin.toInt().toString() + "\u00b0",
+                                                    color = textColor
+                                                )
                                             }
                                             Column(
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                 modifier = Modifier
                                             ) {
                                                 RenderBitmap(live, w.bitmap)
-                                                Text((w.pop * 100).toInt().toString() + "%")
+                                                val pct = (w.pop * 100).toInt()
+                                                Text(
+                                                    (w.pop * 100).toInt().toString() + "%",
+                                                    fontSize = if (pct == 100) 12.sp else 14.sp,
+                                                    color = textColor
+                                                )
                                             }
                                             if (true || inx % rowsize != 0) {
                                                 Column(
@@ -409,7 +454,7 @@ fun MainAppPreviewEvents() {
         val f = File("/TEMP/openweather.txt")
         val fulljson = f.readText()
         val jsonobj = JsonParser.parseString(fulljson).asJsonObject
-        data.value = openWeatherAPI.makeResult(FakeLocation(), fulljson, jsonobj)
+        data.value = OpenWeatherAPI.makeResult(FakeLocation(), fulljson, jsonobj)
     }
     val x = stringResource(id = R.string.openweather_appid)
     OpenWeatherActivity.doStaticContent(false, data)

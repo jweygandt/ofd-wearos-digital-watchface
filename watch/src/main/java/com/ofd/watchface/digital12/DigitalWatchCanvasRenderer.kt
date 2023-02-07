@@ -31,6 +31,7 @@ import com.ofd.complications.Complications
 import com.ofd.complications.VirtualComplicationPlayPauseImpl
 import com.ofd.watchface.location.WatchLocationService
 import com.ofd.watchface.vcomp.ComplicationSlotManagerHolder
+import com.ofd.watchface.vcomp.ICON_BACKGROUND
 import com.ofd.watchface.vcomp.VirtualComplicationWatchRenderSupport
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -430,6 +431,14 @@ class DigitalWatchCanvasRenderer(
                     Rect(bounds.left, bounds.top, bounds.left + h, bounds.bottom)
                 }
                 drawable.bounds = imagebounds
+                when (complication.iconBackground) {
+                    ICON_BACKGROUND.GRAY80 -> {
+                        val r = (imagebounds.right - imagebounds.left).toFloat() * .80f
+                        canvas.drawRoundRect(imagebounds.toRectF(), r, r, D12.darkGrayBackground)
+                    }
+
+                    ICON_BACKGROUND.NONE -> {}
+                }
                 drawable.draw(canvas)
                 textClipBounds = if (complicationWrapper.id % 2 == 1) {
                     Rect(bounds.left, bounds.top, bounds.right - h, bounds.bottom)
@@ -500,7 +509,7 @@ class DigitalWatchCanvasRenderer(
             dateBounds!!,
             textBounds.height() * .2f,
             textBounds.height() * .2f,
-            if (dateHighlight) D12.grayBackground else D12.blackBackground
+            if (dateHighlight) D12.lightGrayBackground else D12.blackBackground
         )
         dateHighlight=false
         canvas.drawText(

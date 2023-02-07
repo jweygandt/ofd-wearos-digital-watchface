@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.apis.openweather
+package com.ofd.apis.airvisual
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -26,14 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.*
 import com.ofd.apis.APIActivity
 import com.ofd.apis.AQIResult
+import com.ofd.apis.airaqi.AirAQIService2
+import com.thanglequoc.aqicalculator.Pollutant
 import java.text.SimpleDateFormat
 
-
-class OpenWeatherAQIActivity : APIActivity<AQIResult<OpenWeatherAQIService.OpenWeatherAQIDetails>>(OpenWeatherAQIService) {
-
+class AirAQIActivity2 :
+    APIActivity<AQIResult<AirAQIService2.AirAQIAQIDetails>>(AirAQIService2) {
 
     @Composable
-    override fun doContent(data: MutableState<AQIResult<OpenWeatherAQIService.OpenWeatherAQIDetails>?>) {
+    override fun doContent(data: MutableState<AQIResult<AirAQIService2.AirAQIAQIDetails>?>) {
         val scalingLazyListState = rememberScalingLazyListState(0, 0)
 
         val lazyRowState = rememberLazyListState()
@@ -87,29 +88,26 @@ class OpenWeatherAQIActivity : APIActivity<AQIResult<OpenWeatherAQIService.OpenW
                     item {
                         TitleCard(onClick = {},
                             modifier = Modifier.fillMaxWidth(),
-                            title = { Text(sdffull.format(WW.details.date)) }) {
+                            title = { "A"+Text(sdffull.format(WW.details.date)) }) {
                             Row(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text("aqi: ")
-                                Text(WW.details.aqistr + "ppm")
+                                Text(WW.details.aqistr)
                             }
-                            for ((comp, v) in WW.details.comps) {
+                            for (s in WW.details.samples) {
                                 Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    horizontalArrangement = Arrangement.Start,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("${comp}: ")
                                     Text(
-                                        v.toString(), color = textcolors[AQIResult.AQI.colorInxForComp(
-                                            comp, v
-                                        )], modifier = Modifier.background(
-                                            colors[AQIResult.AQI.colorInxForComp(
-                                                comp, v
-                                            )]
-                                        )
+                                        AQIResult.AQI.aqiCalculator.getAQI(
+                                            Pollutant.PM25, s.pm25
+                                        ).aqi.toString() + " "
                                     )
+                                    Text("(" + ((s.distanceMeters / 100).toFloat() / 10.0f).toString() + ") ")
+                                    Text(s.name?:"no name")
                                 }
                             }
                         }

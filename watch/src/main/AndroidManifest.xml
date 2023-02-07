@@ -219,6 +219,17 @@
                 android:value="600" />
         </service>
 
+        <activity
+            android:name="com.ofd.apis.purpleair.PurpleAirActivity2"
+            android:icon="@drawable/ic_air_quality"
+            android:label="PurpleAirActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name="com.ofd.complications.OpenWeatherAQI"
             android:exported="true"

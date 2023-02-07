@@ -28,6 +28,7 @@ import com.google.android.gms.wearable.Node
 import com.ofd.watch.R
 import com.ofd.watchface.digital12.D12
 import com.ofd.watchface.digital12.DigitalWatchCanvasRenderer
+import com.ofd.watchface.vcomp.ICON_BACKGROUND
 import com.ofd.watchface.vcomp.VirtualComplication
 import com.ofd.watchface.vcomp.VirtualComplicationWatchRenderSupport
 import java.util.concurrent.CancellationException
@@ -111,6 +112,9 @@ class VirtualComplicationPlayPauseImpl(
 
     override val expiresms: Long
         get() = -1
+
+    override val iconBackground: ICON_BACKGROUND
+        get() = ICON_BACKGROUND.NONE
 
     companion object {
         suspend fun setWatchState(watch: DigitalWatchCanvasRenderer, visible: Boolean?) {

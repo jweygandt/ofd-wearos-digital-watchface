@@ -83,7 +83,8 @@ class OpenWeather : SuspendingComplicationDataSourceService() {
                     ShortTextComplicationData.Builder(
                         text = PlainComplicationText.Builder(
                             text = current.currentTemp.toInt()
-                                .toString() + "\u00b0" + "?ExpiresMS=" + (weatherResult.current.currentDt + 30 * 60 * 1000)
+                                .toString() + "\u00b0" + "?ExpiresMS=" + (weatherResult.current.currentDt + 30 * 60 * 1000) +
+                                "&IconBackground=GRAY80"
                         ).build(),
                         contentDescription = PlainComplicationText.Builder(text = "AirQuality")
                             .build(),

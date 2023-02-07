@@ -21,6 +21,8 @@ import java.time.Instant
  * To support tapping on VComp, we have a tapCallback() which will support an inprocess click on
  * VComp rather than the out of process Intent
  */
+enum class ICON_BACKGROUND { NONE, GRAY80 }
+
 interface VirtualComplication {
     val type: ComplicationType
     val image: Icon?
@@ -35,6 +37,7 @@ interface VirtualComplication {
     val tapCallback: Runnable?
     val color: Int
     val expiresms: Long
+    val iconBackground: ICON_BACKGROUND
 }
 
 // This is used for debugging and such, don't really need more than one instance
@@ -152,6 +155,22 @@ open class StandardComplication(
             val i2 = qry.indexOf("&")
             val v = (if (i2 < 0) qry else qry.substring(0, i2)).toLong()
             return v
+        }
+
+    override val iconBackground: ICON_BACKGROUND
+        get() {
+            val txt = fulltext
+            val inx = txt.indexOf("IconBackground=")
+            if (inx < 0) return ICON_BACKGROUND.NONE
+            val qry = txt.substring(inx + "IconBackground=".length)
+            val i2 = qry.indexOf("&")
+            val v = (if (i2 < 0) qry else qry.substring(0, i2))
+            try {
+                return ICON_BACKGROUND.valueOf(v)
+            }catch(e:Exception){
+                Log.e(TAG, "Bad value for IconBackground="+v)
+                return ICON_BACKGROUND.NONE
+            }
         }
 
     companion object {

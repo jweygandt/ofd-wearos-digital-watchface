@@ -25,6 +25,7 @@ import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
 import com.ofd.apis.AQIResult
 import com.ofd.apis.openweather.OpenWeatherAQIActivity
+import com.ofd.apis.openweather.OpenWeatherAQIService
 import com.ofd.apis.openweather.openWeatherAQI
 import com.ofd.watch.R
 import com.ofd.watchface.location.WatchLocationService
@@ -66,7 +67,7 @@ class OpenWeatherAQI : SuspendingComplicationDataSourceService() {
     }
 
     private fun getComplicationData(
-        aqiResult: AQIResult, complicationType: ComplicationType
+        aqiResult: AQIResult<OpenWeatherAQIService.OpenWeatherAQIDetails>, complicationType: ComplicationType
     ): ComplicationData? {
         return when (aqiResult) {
             is AQIResult.AQI -> {
@@ -81,7 +82,7 @@ class OpenWeatherAQI : SuspendingComplicationDataSourceService() {
 
                     ComplicationType.SHORT_TEXT -> ShortTextComplicationData.Builder(
                         text = PlainComplicationText.Builder(
-                            text = aqiResult.aqistr
+                            text = aqiResult.shortText
                         ).build(),
                         contentDescription = PlainComplicationText.Builder(text = "AirQuality")
                             .build(),
@@ -90,7 +91,7 @@ class OpenWeatherAQI : SuspendingComplicationDataSourceService() {
                     ComplicationType.RANGED_VALUE -> {
                         val mx: Float
                         val mn: Float
-                        val value = aqiResult.aqippm
+                        val value = aqiResult.rangeValue
                         val color = aqiResult.color - 1
                         if (value <= 50) {
                             mn = 0f

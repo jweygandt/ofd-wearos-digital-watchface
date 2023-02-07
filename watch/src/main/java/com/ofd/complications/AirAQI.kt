@@ -16,28 +16,22 @@
 package com.ofd.complications
 
 import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
 import android.util.Log
-import androidx.wear.watchface.ComplicationSlot
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
 import com.odbol.wear.airquality.purpleair.AirQualitySearch
 import com.ofd.apis.AQIResult
-import com.ofd.apis.purpleair.PurpleAirActivity2
-import com.ofd.apis.purpleair.PurpleAirService2
+import com.ofd.apis.airaqi.AirAQIService2
+import com.ofd.apis.airvisual.AirAQIActivity2
 import com.ofd.watch.R
 import com.ofd.watchface.location.WatchLocationService
-import com.ofd.watchface.vcomp.StandardComplication
-import com.ofd.watchface.vcomp.VirtualComplicationWatchRenderSupport
 import io.reactivex.disposables.CompositeDisposable
-import java.time.Instant
 
-
-class PurpleAirAQI : SuspendingComplicationDataSourceService() {
+class AirAQIAQI : SuspendingComplicationDataSourceService() {
 
     companion object {
         private const val TAG = "AirQuality"
@@ -71,18 +65,17 @@ class PurpleAirAQI : SuspendingComplicationDataSourceService() {
         val wl = WatchLocationService.getLocation()
         Log.d(TAG, "Updating AirQuality: " + wl.valid)
         if (wl.valid) {
-            val aqi = PurpleAirService2.get(applicationContext, wl.location)
+            val aqi = AirAQIService2.get(applicationContext, wl.location)
             return getComplicationData(request.complicationType, aqi)
         } else {
             return getComplicationData(
-                request.complicationType,
-                AQIResult.Error<PurpleAirService2.PurpleAirAQIDetails>(TAG, "no location")
+                request.complicationType, AQIResult.Error<AirAQIService2.AirAQIAQIDetails>(TAG, "no location")
             )
         }
     }
 
     private fun getComplicationData(
-        complicationType: ComplicationType, aqi: AQIResult<PurpleAirService2.PurpleAirAQIDetails>
+        complicationType: ComplicationType, aqi: AQIResult<AirAQIService2.AirAQIAQIDetails>
     ): ComplicationData? {
         Log.d(TAG, "Results: " + AirQualitySearch.statusString())
         //aqd.sortedSensors.forEach { s -> Log.d(TAG, s.toString()) }
@@ -153,8 +146,8 @@ class PurpleAirAQI : SuspendingComplicationDataSourceService() {
 
     fun Context.tapAction(): PendingIntent? {
         val intent = Intent(
-            this, PurpleAirActivity2::class.java
-        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            this, AirAQIActivity2::class.java
+        )
         return PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

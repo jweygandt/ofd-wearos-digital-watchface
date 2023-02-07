@@ -1,41 +1,29 @@
 package com.ofd.apis.openweather
 
 import android.content.Context
-import android.location.Address
-import android.util.Log
-import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.ofd.apis.APILocation
 import com.ofd.apis.APIService
 import com.ofd.apis.WeatherResult
+import com.ofd.apis.WeatherService
 import com.ofd.watch.R
-import com.ofd.watchface.location.ResolvedLocation
-import java.io.InputStreamReader
 import java.net.URL
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
-suspend fun openWeather(context: Context, location: APILocation) = openWeatherAPI.get(context, location)
+suspend fun openWeather(context: Context, location: APILocation) = OpenWeatherAPI.get(context, location)
 
-val openWeatherAPI = object : APIService<WeatherResult>() {
+object OpenWeatherAPI : WeatherService() {
 
-    override val appidR = R.string.openweather_appid
+    val appidR = R.string.openweather_appid
 
-    override fun makeURL(location :APILocation, appid: String?): URL {
+    var appid:String? = null
+
+    override fun makeURL(context: Context, location :APILocation): URL {
+        if(appid==null){
+            appid = context.getString(appidR)
+        }
         return URL(
             OPENWEATHER3 + "lat=${location.latitude}&lon=${location.longitude}&appid=$appid&exclude=minutely&units=imperial"
         )
-    }
-
-    override fun makeErrorResult(s: String): WeatherResult {
-       return WeatherResult.Error(TAG, s)
-    }
-
-    override fun isErrorResult(r: WeatherResult): Boolean {
-        return r is WeatherResult.Error
     }
 
     private val OPENWEATHER3 = "https://api.openweathermap.org/data/3.0/onecall?"

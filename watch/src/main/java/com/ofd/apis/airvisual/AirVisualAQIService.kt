@@ -1,35 +1,73 @@
 package com.ofd.apis.airvisual
 
+import android.content.Context
 import com.google.gson.JsonObject
-import com.ofd.apis.APILocation
-import com.ofd.apis.APIService
-import com.ofd.apis.AQIResult
+import com.ofd.apis.*
+import com.ofd.apis.openweather.OpenWeatherAPI
 import com.ofd.watch.R
-import com.ofd.watchface.location.ResolvedLocation
+import com.thanglequoc.aqicalculator.AQICalculator
+import com.thanglequoc.aqicalculator.Pollutant
 import java.net.URL
 import java.text.SimpleDateFormat
 
-class AirVisualAQIService : APIService<AQIResult>() {
+object AirVisualAQIService : APIService<AQIResult<AirVisualAQIService.AirVisualAQIDetails>>() {
 
-    override val appidR = R.string.airvisual_appid
+    val appidR = R.string.airvisual_appid
+    var appid: String? = null
 
     private val AIRVISUALURL = "https://api.airvisual.com/v2/nearest_city?"
-    override fun makeURL(location: APILocation, appid: String?): URL {
+
+    class AirVisualAQIDetails(
+        val location: APILocation,
+        val fulljsonn: String,
+        val date: Long,
+        val color: Int,
+        val comps: Map<String, Float>
+    ) : AQIDetails {
+
+        val aqippm: Int
+        val aqistr: String
+
+        init {
+            if (comps.containsKey("pm2_5")) {
+                aqippm = AQIResult.AQI.aqiCalculator.getAQI(
+                    Pollutant.PM25, comps.get("pm2_5")!!.toDouble()
+                ).aqi
+                aqistr = aqippm.toString() + " ppm"
+            } else {
+                this.aqippm = 0
+                this.aqistr = "??"
+            }
+        }
+
+        override val shortText get() = aqistr
+        override val rangeValue get() = aqippm.toFloat()
+        override val rangeText get() = shortText
+    }
+
+    override fun makeURL(context: Context, location: APILocation): URL {
+        if (appid == null) {
+            appid = context.getString(OpenWeatherAPI.appidR)
+        }
         return URL(
             AIRVISUALURL + "lat=${location.latitude}&lon=${location.longitude}&appid=$appid"
         )
     }
 
-    override fun makeErrorResult(s: String): AQIResult {
+    override fun makeErrorResult(s: String): AQIResult<AirVisualAQIDetails> {
         return AQIResult.Error(TAG, s)
     }
 
-    override fun isErrorResult(r: AQIResult): Boolean {
+    override fun isErrorResult(r: AQIResult<AirVisualAQIDetails>): Boolean {
         return r is AQIResult.Error
     }
 
     private val longsdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-    override suspend fun makeResult(location: APILocation, fulljson: String, top: JsonObject): AQIResult {
+    override suspend fun makeResult(
+        location: APILocation,
+        fulljson: String,
+        top: JsonObject
+    ): AQIResult<AirVisualAQIDetails> {
         val status = top.getAsJsonPrimitive("status").asString
         if ("success".equals(status)) {
             val data = top.getAsJsonObject("data")
@@ -41,7 +79,7 @@ class AirVisualAQIService : APIService<AQIResult>() {
             val date = longsdf.parse(timestr).time
 
             return AQIResult.AQI(
-                "AirVisualAQI", metrics, location, fulljson, date, aqi, cmap
+                TAG, AirVisualAQIDetails(location, fulljson, date, aqi, cmap), metrics
             )
         } else {
             return AQIResult.Error("AirVisualAQI", status)

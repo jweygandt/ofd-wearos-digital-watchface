@@ -1,6 +1,5 @@
 package com.ofd.apis
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -13,12 +12,9 @@ import com.ofd.watchface.location.LocationViewModel
 import com.ofd.watchface.location.ResolvedLocation
 import kotlinx.coroutines.launch
 
-abstract class APIActivity<Result>(private val service: APIService<Result>) : ComponentActivity() {
+abstract class APIActivity<Result>(private val service: APIService<Result>) :
+    ComponentActivity() {
 
-//    abstract fun makeErrorResult(s: String): Result
-//
-//    abstract suspend fun getData(context: Context, location: ResolvedLocation): Result
-//
     @Composable
     abstract fun doContent(data: MutableState<Result?>): Unit
 
@@ -48,5 +44,18 @@ abstract class APIActivity<Result>(private val service: APIService<Result>) : Co
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        // well this is a big hack
+        // could not get PurpleAQIActivity to reliability launch
+        // It would work, but then once OpenWeather*Activity(s) were launched, it would not
+        // Clicking on AQI would bring up the last OpenWeather activity
+        // Did notice in "less-filtered" logcat that the OS was getting the right intent
+        // although with PurpleAQI there was a difference in log message than with OpenWeather
+        // something about "locks", but don't really understand the differences
+
+        // So force finish of the activity causes a new one to be created each time
+        finish()
+    }
 }
 

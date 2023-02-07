@@ -2,6 +2,7 @@ package com.ofd.apis
 
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
+import com.ofd.apis.openweather.OpenWeatherAPI
 import java.util.concurrent.atomic.AtomicInteger
 
 sealed class WeatherResult {
@@ -50,4 +51,17 @@ sealed class WeatherResult {
     }
 
     data class Error(val source: String, val msg: String) : WeatherResult()
+}
+
+abstract class WeatherService : APIService<WeatherResult>() {
+
+    override fun makeErrorResult(s: String): WeatherResult {
+        return WeatherResult.Error(TAG, s)
+    }
+
+    override fun isErrorResult(r: WeatherResult): Boolean {
+        return r is WeatherResult.Error
+    }
+
+
 }

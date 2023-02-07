@@ -19,6 +19,8 @@ So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
 
+2/7/2023 Added detail pages for OpenWeather, OpenWeatherAQI and PurpleAQI.
+
 2/1/23 Refactoring of classes for APIs, OpenWeater and preparing for more. Found that OpenWeater's
 AQI API returns values differing with many other sources, so looking for alternatives. Currently
 Purple's still works well.
@@ -49,9 +51,10 @@ will be "press-pause-double-press", which sometimes is a triple press.
 
 In the sense of location aware complications (described below), battery and the play/pause are
 special as well. So I have created my own version of Virtual Complications (VComps). Still a work in
-progress. 
+progress.
 
 They feature:
+
 * onClick handlers
 * methods for Range complcations to color, See AQI Complications
 * methods for data expiration (still testing)
@@ -99,16 +102,20 @@ LocationRequest.PRIORITY_HIGH_ACCURACY). Unfortunately that means the complicati
 standalone.
 
 Complications included:
+
 * Sunrise/Sunset
 * VirtualComplicationPlayPause
-* PurpleAQI
+* PurpleAQI - Different than the original odbol/air-quality-complication, try to get a certian
+  number of samples and then take the median of the samples.
 * OpenWeatherAQI (seems to not agree with other sources)
 * OpenWeather
 * Less used now: Where LocationTest, ComplicationStatus
 
 Activities
+
 * OpenWeatherAQIActivity (touch on OpenWeatherAQI)
 * OpenWeaterActivity (touch on OpenWeather)
+* PurpleAQIActivity (touch on PurpleAQI)
 * Less used: WhereAmI
 
 Thanks to:

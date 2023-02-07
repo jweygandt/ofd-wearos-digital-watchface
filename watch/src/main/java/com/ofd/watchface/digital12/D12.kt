@@ -3,7 +3,6 @@ package com.ofd.watchface.digital12
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.wear.watchface.DrawMode
-import com.ofd.complications.*
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -109,9 +108,14 @@ class D12 {
             color = Color.BLACK
         }
 
-        val grayBackground = Paint().apply {
+        val lightGrayBackground = Paint().apply {
             style = Paint.Style.FILL_AND_STROKE
             color = Color.LTGRAY
+        }
+
+        val darkGrayBackground = Paint().apply {
+            style = Paint.Style.FILL_AND_STROKE
+            color = Color.GRAY
         }
 
         private const val cts = 35f
