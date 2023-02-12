@@ -61,9 +61,8 @@ class VirtualComplicationPlayPauseImpl(
             )
         }
 
-    private fun getIconFromPlayMode() =
-        if (playPauseEnabled.get()) R.drawable.ic_play_pause_active
-        else R.drawable.ic_play_pause_disabled
+    private fun getIconFromPlayMode() = if (playPauseEnabled.get()) R.drawable.ic_play_pause_active
+    else R.drawable.ic_play_pause_disabled
 
     override val text: String
         get() = D12.status.get() ?: "Not yet set"
@@ -78,7 +77,7 @@ class VirtualComplicationPlayPauseImpl(
         canvas: Canvas, bleft: Float, btop: Float, bbottom: Float, sqsize: Float
     ): Boolean = false
 
-    override val tapCallback: Runnable
+    override val onTap: Runnable
         get() = Runnable {
             val cnt = tapCount.incrementAndGet()
             when (cnt % 2) {
@@ -120,8 +119,7 @@ class VirtualComplicationPlayPauseImpl(
         suspend fun setWatchState(watch: DigitalWatchCanvasRenderer, visible: Boolean?) {
             if (visible != null && playPauseEnabled.get()) {
                 Log.d(TAG, "WatchState.visible=$visible")
-                val nodeMap = getCapabilitiesForReachableNodes(watch.capabilityClient)
-                nodeMap.filter { e -> e.value.contains("mobile") }.map { e -> e.key }.forEach { n ->
+                getMobileNodes(watch.capabilityClient).forEach { n ->
                     notifyVisibilityChanged(watch.messageClient, n, visible)
                 }
             }
@@ -129,8 +127,7 @@ class VirtualComplicationPlayPauseImpl(
 
         suspend fun toggleMusic(watch: VirtualComplicationWatchRenderSupport) {
             Log.d(TAG, "ToggleMusic")
-            val nodeMap = getCapabilitiesForReachableNodes(watch.capabilityClient)
-            nodeMap.filter { e -> e.value.contains("mobile") }.map { e -> e.key }.forEach { n ->
+            getMobileNodes(watch.capabilityClient).forEach { n ->
                 notifyVisibilityChanged(watch.messageClient, n, null)
             }
         }
@@ -142,7 +139,7 @@ class VirtualComplicationPlayPauseImpl(
                 val nodeId = n.id
                 messageClient.sendMessage(
                     nodeId,
-                    if (visible == null) "/toggle-playback" else if (visible) "/stop-playback" else "/start-playback",
+                    "/play-pause" + if (visible == null) "/toggle-playback" else if (visible) "/stop-playback" else "/start-playback",
                     byteArrayOf()
                 ).await()
                 Log.d(TAG, "Message sent successfully")
@@ -151,45 +148,43 @@ class VirtualComplicationPlayPauseImpl(
             } catch (exception: Exception) {
                 Log.e(TAG, "Message failed", exception)
             }
-
         }
 
-        private suspend fun getCapabilitiesForReachableNodes(capabilityClient: CapabilityClient): Map<Node, Set<String>> =
-            capabilityClient.getAllCapabilities(CapabilityClient.FILTER_REACHABLE).await()
-                // Pair the list of all reachable nodes with their capabilities
-                .flatMap { (capability, capabilityInfo) ->
-                    Log.d(TAG, "Capability: " + capability + ":")
-                    capabilityInfo.nodes.forEach { n ->
-                        Log.d(
-                            TAG, "  " + n.displayName + ":" + capability
-                        )
-                    }
-                    capabilityInfo.nodes.map { it to capability }
-                }
-                // Group the pairs by the nodes
-                .groupBy(keySelector = { it.first }, valueTransform = { it.second })
-                // Transform the capability list for each node into a set
-                .mapValues { it.value.toSet() }
+        private suspend fun getMobileNodes(capabilityClient: CapabilityClient): Set<Node> =
+            capabilityClient.getCapability("mobile", CapabilityClient.FILTER_REACHABLE)
+                .await().nodes
+
+//        private suspend fun getCapabilitiesForReachableNodes(capabilityClient: CapabilityClient): Map<Node, Set<String>> =
+//            capabilityClient.getAllCapabilities(CapabilityClient.FILTER_REACHABLE).await()
+//                // Pair the list of all reachable nodes with their capabilities
+//                .flatMap { (capability, capabilityInfo) ->
+//                    Log.d(TAG, "Capability: " + capability + ":")
+//                    capabilityInfo.nodes.forEach { n ->
+//                        Log.d(
+//                            TAG, "  " + n.displayName + ":" + capability
+//                        )
+//                    }
+//                    capabilityInfo.nodes.map { it to capability }
+//                }
+//                // Group the pairs by the nodes
+//                .groupBy(keySelector = { it.first }, valueTransform = { it.second })
+//                // Transform the capability list for each node into a set
+//                .mapValues { it.value.toSet() }
     }
 }
 
 class VirtualComplicationPlayPause : ComplicationDataSourceService() {
 
-
     companion object {
         private const val TAG = "VirtualComplicationPlayPause"
 
         var uctr = AtomicInteger(0)
-
-
     }
 
     override fun onComplicationActivated(
         complicationInstanceId: Int, type: ComplicationType
     ) {
         Log.d(TAG, "onComplicationActivated(): $complicationInstanceId")
-
-
     }
 
     override fun getPreviewData(type: ComplicationType): ComplicationData {
@@ -227,6 +222,4 @@ class VirtualComplicationPlayPause : ComplicationDataSourceService() {
     override fun onComplicationDeactivated(complicationInstanceId: Int) {
         Log.d(TAG, "Deactivated")
     }
-
-
 }

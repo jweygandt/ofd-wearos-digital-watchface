@@ -95,35 +95,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.ofd.watchface.location.WhereAmIActivity"
-            android:label="Where Am I"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <service
-            android:name="com.ofd.complications.LocationTest"
-            android:exported="true"
-            android:icon="@drawable/ic_baseline_calendar_today_24"
-            android:label="Location Test"
-            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
-            <intent-filter>
-                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
-                android:value="SHORT_TEXT,LONG_TEXT" />
-
-            <meta-data
-                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
-                android:value="600" />
-        </service>
-
         <service
             android:name="com.ofd.complications.ComplicationStatus"
             android:exported="true"
@@ -226,7 +197,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -275,7 +245,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -286,38 +255,40 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <service
-            android:name="com.ofd.datalayer.DataLayerListenerService"
+            android:name="com.ofd.complications.CalendarListenerService"
             android:exported="true">
             <intent-filter>
-                <!-- listeners receive events that match the action and data filters -->
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data
                     android:host="*"
-                    android:pathPrefix="/count"
-                    android:scheme="wear" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
-                <data
-                    android:host="*"
-                    android:pathPrefix="/start-activity"
+                    android:pathPrefix="/calendar"
                     android:scheme="wear" />
             </intent-filter>
         </service>
 
-        <activity
-            android:name="com.ofd.datalayer.MainActivity"
-            android:exported="true">
+        <service
+            android:name="com.ofd.complications.CalendarComplication"
+            android:exported="true"
+            android:icon="@drawable/ic_baseline_calendar_today_24"
+            android:label="OFDCalendar"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
             </intent-filter>
-        </activity>
+
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="LONG_TEXT" />
+
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="600" />
+        </service>
+
 
     </application>
 </manifest>

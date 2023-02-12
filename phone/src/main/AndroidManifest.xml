@@ -17,22 +17,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ofd.watch">
 
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="false" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
 
     <application
         android:allowBackup="true"
         android:fullBackupOnly="true"
-        android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name">
+        android:icon="@drawable/watch"
+        android:label="OFD Watch Companion">
 
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name="com.ofd.digital.watchface.datalayer.MainActivity"
+            android:name=".datalayer.PhoneActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar">
             <intent-filter>
@@ -40,5 +38,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name="com.ofd.complications.PlayPauseListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/play-pause"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name="com.ofd.complications.OFDCalendarListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/calendar"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
     </application>
+
 </manifest>

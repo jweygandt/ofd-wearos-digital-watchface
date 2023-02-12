@@ -44,10 +44,10 @@ class D12 {
         const val C1HeightP = .110f
 
         // c3/c5 spacing
-        const val c3C5GapP = .028f
+        const val c3C5GapP = .01f
 
         // c5/time spacing
-        const val timeC5GapP = .028f
+        const val timeC5GapP = 0f
 
         // c5 width
         const val c5WidthP = .630f
@@ -119,7 +119,7 @@ class D12 {
         }
 
         private const val cts = 35f
-        private const val ctss = cts * .75f
+        private const val ctss = cts * .825f
 
         private val iconPaint = mapOf(
             DrawMode.INTERACTIVE to Paint().apply {
@@ -137,7 +137,7 @@ class D12 {
 
         private val c11paint = Paint().apply {
             isAntiAlias = true
-            textSize = ctss
+            textSize = arcText
             isFakeBoldText = true
             color = 0xFFA0A0FF.toInt()
             style = Paint.Style.STROKE

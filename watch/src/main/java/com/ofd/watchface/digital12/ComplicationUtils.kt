@@ -440,7 +440,7 @@ class Listener(
             }
         } else if (cw != null) {
             val cb =
-                cw.virtualComplication(mgrh.watch,null).tapCallback
+                cw.virtualComplication(mgrh.watch,null).onTap
             if (cb != null) cb.run()
         }
     }

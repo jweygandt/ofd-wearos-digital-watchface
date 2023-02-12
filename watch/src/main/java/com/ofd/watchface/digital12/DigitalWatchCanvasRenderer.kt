@@ -15,6 +15,7 @@
  */
 package com.ofd.watchface.digital12
 
+import android.content.ContentResolver
 import android.content.Context
 import android.graphics.*
 import android.util.Log
@@ -39,12 +40,10 @@ import java.time.format.FormatStyle
 import kotlin.math.min
 import kotlinx.coroutines.*
 
-
 // Default for how long each frame is displayed at expected frame rate.
 private const val FRAME_PERIOD_MS_DEFAULT: Long = 250
 
 val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE dd")
-
 
 /**
  * Renders watch face via data in Room database. Also, updates watch face state based on setting
@@ -56,6 +55,7 @@ class DigitalWatchCanvasRenderer(
     val watchState: WatchState,
     private val complicationSlotManagerHolder: ComplicationSlotManagerHolder,
     override val currentUserStyleRepository: CurrentUserStyleRepository,
+    override val contentResolver: ContentResolver,
     canvasType: Int
 ) : Renderer.CanvasRenderer2<DigitalWatchCanvasRenderer.DigitalSharedAssets>(
     surfaceHolder,
@@ -179,7 +179,6 @@ class DigitalWatchCanvasRenderer(
             drawTime(canvas, bounds, zonedDateTime)
         }
 
-
 //        if (renderParameters.drawMode == DrawMode.INTERACTIVE && renderParameters.watchFaceLayers.contains(
 //                WatchFaceLayer.BASE
 //            )
@@ -298,7 +297,6 @@ class DigitalWatchCanvasRenderer(
         }
     }
 
-
     private fun drawIcon(
         complicationWrapper: ComplicationWrapper, canvas: Canvas
     ) {
@@ -352,6 +350,11 @@ class DigitalWatchCanvasRenderer(
             //                        Log.d(TAG, "\t" + ld.asWireComplicationData())
             val text = complication.text
             val bounds = complicationWrapper.computeBounds(Rect(0, 0, canvas.width, canvas.height))
+
+//            canvas.drawRoundRect(
+//                bounds.toRectF(), bounds.height() * .2f, bounds.height() * .2f, D12.blackBackground
+//            )
+
             val textPaint = getCompPaint(complicationWrapper.id)
             canvas.save()
             canvas.clipRect(bounds)
@@ -371,20 +374,21 @@ class DigitalWatchCanvasRenderer(
                 }
             } else {
                 for (t in text.split("\n")) {
-                    textPaint.getTextBounds(t, 0, t.length, textBounds)
-                    bottom += textBounds.bottom - textBounds.top
+                    textPaint.getTextBounds("XXXXX", 0, 5, textBounds)
+                    var height = textBounds.bottom - textBounds.top
+                    bottom += height
                     //                            Log.d(TAG, "Line: " + bottom + ":" + textBounds + ":" + bounds +":"+t)
                     canvas.drawText(
                         t, bounds.left.toFloat(), bottom.toFloat(), textPaint
                     )
-                    bottom += 4
-                    if (bottom > bounds.bottom) break
+                    bottom += 6
+//                    Log.d(TAG, "Line: " + bottom + " " + height + " > " + bounds.bottom + " $t")
+                    if (bottom + height > bounds.bottom) break
                 }
             }
             canvas.restore()
             //                        Log.d(TAG, "Long Text: " + text);
             //                        complication.render(canvas, zonedDateTime, renderParameters)
-
         } else {
             //                        Log.d(TAG, "value: " + d)
             //                        Log.d(TAG, "value2:" + d.dataSource)
@@ -511,7 +515,7 @@ class DigitalWatchCanvasRenderer(
             textBounds.height() * .2f,
             if (dateHighlight) D12.lightGrayBackground else D12.blackBackground
         )
-        dateHighlight=false
+        dateHighlight = false
         canvas.drawText(
             date, cx - textBounds.width() / 2.0f, datecy + textBounds.height() / 2.0f, D12.textPaint
         )
@@ -545,6 +549,5 @@ class DigitalWatchCanvasRenderer(
 
     companion object {
         private const val TAG = "OFDDigitalRenderer"
-
     }
 }

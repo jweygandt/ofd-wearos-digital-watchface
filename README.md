@@ -19,6 +19,12 @@ So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
 
+2/12/2023 Added first revision of multi event calendar. Currently need to tap the date string on the
+watch face to refresh it. Exploring methods to detect calender changes
+
+2/11/2023 The Phone app is now also a ListenerService so it is no longer necessary for it to be
+running for the play/pause to work.
+
 2/7/2023 Added detail pages for OpenWeather, OpenWeatherAQI and PurpleAQI.
 
 2/1/23 Refactoring of classes for APIs, OpenWeater and preparing for more. Found that OpenWeater's
@@ -41,11 +47,10 @@ with tap enabled you simply tap the screen anywhere other than complicaiton 7 or
 icon and it will toggle play/pause. With visibility enabled, when the watch face becomes visible
 play pauses, and when not visible play resumes. Allowing you to run spotify the app, and use buttons
 to bring up watch face, and (customised) double press to go to last app. Pause/resume by the button
-push. I should note it needs the phone app installed on the phone, and it need to be started, but
-not necessarlly visible (actually that is a big hack right now as well). BE SURE TO DISABLE THE SOS
-MODE on the triple button press. The effort to get to the button with ski clothes on may not bring
-the watch out of ambient, so you must do a button press to achieve that. This means the resume music
-will be "press-pause-double-press", which sometimes is a triple press.
+push. BE SURE TO DISABLE THE SOS MODE on the triple button press. The effort to get to the button
+with ski clothes on may not bring the watch out of ambient, so you must do a button press to achieve
+that. This means the resume music will be "press-pause-double-press", which sometimes is a triple
+press. This feature requires the phone app to be installed, and it installs a ListenerService
 
 # Virtual Complications
 
@@ -59,6 +64,11 @@ They feature:
 * methods for Range complcations to color, See AQI Complications
 * methods for data expiration (still testing)
 
+# Complication Updates
+
+Since complications can go stale for various reasons, including initial startup, tapping the date
+string at the top of the watch will initiate a complication refresh.
+
 # Goals:
 
 * No data collection by 3rd parties, why should a watch face and complications send data to others?
@@ -69,9 +79,8 @@ They feature:
     * Weather, sunrise/sunset, battery, heartrate (I use mine, not Samsungs)
   * 4 for icon only, generally tap-to-launch
     * app and contacts shortcuts
-  * 1 large multi-line text
-    * calendar, which seems to have data hidden, thanks Samsung for your special API only you know
-      about! Using ProWear Calender for now, but will work on a multi-event display
+  * 1 large multi-line text, 4 lines
+    * calendar, using the OFDCalendar (still a work in progress)
   * 2 range
     * Steps and AQI
   * 1 large full image background
@@ -109,6 +118,7 @@ Complications included:
   number of samples and then take the median of the samples.
 * OpenWeatherAQI (seems to not agree with other sources)
 * OpenWeather
+* Calendar - manual refresh
 * Less used now: Where LocationTest, ComplicationStatus
 
 Activities

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.watchface.datalayer
+package com.ofd.watch.datalayer
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
@@ -45,6 +45,7 @@ fun MainApp(
     onStartWearableActivityClick: () -> Unit,
     onPauseMusicClick: () -> Unit,
     onResumeMusicClick: () -> Unit,
+    doItClick: () -> Unit,
 ) {
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
         item {
@@ -61,6 +62,11 @@ fun MainApp(
                         onClick = onResumeMusicClick, enabled = true
                     ) {
                         Text(stringResource(id = R.string.resume_music))
+                    }
+                    Button(
+                        onClick = doItClick, enabled = true
+                    ) {
+                        Text("DoIt")
                     }
                 }
 
@@ -125,5 +131,6 @@ fun MainAppPreview() {
         image = null,
         onStartWearableActivityClick = {},
         onPauseMusicClick = {},
-        onResumeMusicClick = {})
+        onResumeMusicClick = {},
+        doItClick = {})
 }

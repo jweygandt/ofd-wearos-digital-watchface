@@ -5,10 +5,8 @@ import android.util.Log
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
-import java.io.StringReader
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -23,7 +21,6 @@ class APIMetrics {
     val metricNumConflict = AtomicInteger()
     val metricNumBypass = AtomicInteger()
 }
-
 
 abstract class APIService<Result> {
 
@@ -43,6 +40,7 @@ abstract class APIService<Result> {
     open fun makeInputStream(context: Context, location: APILocation): Reader {
         throw Exception("need to define makeInputStream")
     }
+
     abstract fun makeErrorResult(s: String): Result
     abstract fun isErrorResult(r: Result): Boolean
     abstract suspend fun makeResult(
@@ -54,6 +52,11 @@ abstract class APIService<Result> {
      * something will change. Eventually this needs to return false, or iteration will continue.
      */
     open fun needToIterate(r: Result): Boolean = false
+
+    suspend fun forceget(context: Context, location: APILocation): Result {
+        lastQueryTimeMs=0
+        return get(context, location)
+    }
 
     suspend fun get(context: Context, location: APILocation): Result {
         metrics.metricNumCalls.incrementAndGet()
@@ -89,18 +92,18 @@ abstract class APIService<Result> {
 
     private suspend fun getInternal(context: Context, location: APILocation): Result {
         try {
-            var result : Result
+            var result: Result
             var iter = 0;
             do {
-                if(++iter > 5){
+                if (++iter > 5) {
                     Log.e(TAG, "Too many API Service iterations")
                     return makeErrorResult("Too many API iterations")
                 }
                 val url = makeURL(context, location)
-                val reader = if(url!=null) {
+                val reader = if (url != null) {
                     Log.d(TAG, "fetching: " + url.toString())
                     InputStreamReader(url.openConnection().getInputStream())
-                }else{
+                } else {
                     Log.d(TAG, "fetching by input stream")
                     makeInputStream(context, location)
                 }
@@ -121,5 +124,4 @@ abstract class APIService<Result> {
             return makeErrorResult(e.message ?: "null")
         }
     }
-
 }

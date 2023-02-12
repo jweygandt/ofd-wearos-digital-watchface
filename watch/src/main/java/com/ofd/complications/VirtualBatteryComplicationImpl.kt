@@ -1,6 +1,5 @@
 package com.ofd.complications
 
-import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -18,18 +17,13 @@ import java.time.Instant
  * BTW use this in positions 1-4, the SHORT_TEXT positions
  */
 class VirtualBatteryComplicationImpl(
-    slot: ComplicationSlot,
-    watch: VirtualComplicationWatchRenderSupport,
-    instant: Instant?
-) :
-    StandardComplication(slot, watch, instant) {
+    slot: ComplicationSlot, watch: VirtualComplicationWatchRenderSupport, instant: Instant?
+) : StandardComplication(slot, watch, instant) {
     override val image: Icon? get() = null
 
     override fun customDrawable(
-        canvas: Canvas, bleft: Float, btop: Float, bbottom: Float, sqsize:
-        Float
-    )
-        : Boolean {
+        canvas: Canvas, bleft: Float, btop: Float, bbottom: Float, sqsize: Float
+    ): Boolean {
         val batteryPaint = Paint().apply {
             isAntiAlias = true
             color = Color.GRAY
@@ -40,8 +34,7 @@ class VirtualBatteryComplicationImpl(
 
         val pct = Integer.parseInt(text).toFloat()
         val cut = (1f - pct / 100f) * .8f * sqsize + .1f * sqsize
-        val fillcolor =
-            if (pct > 25f) Color.GREEN else if (pct > 10f) Color.YELLOW else Color.RED
+        val fillcolor = if (pct > 25f) Color.GREEN else if (pct > 10f) Color.YELLOW else Color.RED
 
         if (cut < .3f * sqsize) {
             canvas.drawLine(

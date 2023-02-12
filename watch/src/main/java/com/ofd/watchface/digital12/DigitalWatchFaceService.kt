@@ -121,6 +121,7 @@ class DigitalWatchFaceService : WatchFaceService() {
             watchState = watchState,
             complicationSlotManagerHolder = complicationSlotManagerHolder,
             currentUserStyleRepository = currentUserStyleRepository,
+            contentResolver = contentResolver,
             canvasType = CanvasType.HARDWARE
         )
 

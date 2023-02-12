@@ -1,5 +1,6 @@
 package com.ofd.watchface.vcomp
 
+import android.content.ContentResolver
 import android.content.Context
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import com.google.android.gms.wearable.CapabilityClient
@@ -16,5 +17,6 @@ interface VirtualComplicationWatchRenderSupport {
     val scope: CoroutineScope
     val context: Context
     val currentUserStyleRepository : CurrentUserStyleRepository?
+    val contentResolver : ContentResolver
 }
 

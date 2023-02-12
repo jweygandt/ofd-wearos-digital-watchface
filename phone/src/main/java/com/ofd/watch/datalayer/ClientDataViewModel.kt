@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ofd.digital.watchface.datalayer
+package com.ofd.watch.datalayer
 
 import android.graphics.Bitmap
 import android.util.Log
@@ -25,12 +25,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.android.gms.wearable.*
 import com.ofd.watch.R
+import com.ofd.complications.PlayPause
 
 /**
  * A state holder for the client data.
  */
-class ClientDataViewModel : ViewModel(), DataClient.OnDataChangedListener,
+class ClientDataViewModel(val playPause: PlayPause) : ViewModel(), DataClient.OnDataChangedListener,
     MessageClient.OnMessageReceivedListener, CapabilityClient.OnCapabilityChangedListener {
+
 
     private val _events = mutableStateListOf<Event>()
 
@@ -75,13 +77,13 @@ class ClientDataViewModel : ViewModel(), DataClient.OnDataChangedListener,
                 title = R.string.message_from_watch, text = messageEvent.toString()
             )
         )
-        val path = messageEvent.path
-        if(path.contains("stop"))
-            MainActivity.pauseMusic()
-        else if(path.contains("start"))
-            MainActivity.resumeMusic()
-        else if (path.contains("toggle"))
-            MainActivity.togglePlayback()
+//        val path = messageEvent.path
+//        if(path.contains("stop"))
+//            playPause.pauseMusic()
+//        else if(path.contains("start"))
+//            playPause.resumeMusic()
+//        else if (path.contains("toggle"))
+//            playPause.togglePlayback()
 
         if (_events.size > 8) {
             _events.removeRange(0, _events.size - 8)

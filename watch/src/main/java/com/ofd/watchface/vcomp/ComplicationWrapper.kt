@@ -7,7 +7,6 @@ import androidx.wear.watchface.RenderParameters
 import com.ofd.watchface.vcomp.StandardComplication
 import com.ofd.watchface.vcomp.VirtualComplication
 import com.ofd.watchface.vcomp.VirtualComplicationWatchRenderSupport
-import com.ofd.watchface.vcomp.virtualComplicationStatus
 import java.time.Instant
 import java.time.ZonedDateTime
 
@@ -30,7 +29,7 @@ class ComplicationWrapper(private val slot: ComplicationSlot) {
         val cls = slot.complicationData.value.dataSource?.className
         if (cls != null) {
             when (cls) {
-                VirtualComplicationStatus::class.qualifiedName -> return virtualComplicationStatus
+                VirtualComplicationStatus::class.qualifiedName -> return VirtualComplicationStatusImpl(watch)
                 VirtualComplicationPlayPause::class.qualifiedName -> return VirtualComplicationPlayPauseImpl(
                     watch
                 )

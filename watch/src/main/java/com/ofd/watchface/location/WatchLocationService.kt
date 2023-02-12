@@ -73,7 +73,7 @@ class WatchLocationService {
             if (now - lastTime.get() > delay && renderParameters.drawMode == DrawMode.INTERACTIVE) {
                 lastTime.set(now)
                 scope.launch {
-                    Log.d(WhereAmIActivity.TAG, "render:launch()")
+                    Log.d(TAG, "render:launch()")
                     val cc = callcnt.incrementAndGet()
                     if (locationViewModel == null) {
                         locationViewModel = LocationViewModel("Watch.render", context)
