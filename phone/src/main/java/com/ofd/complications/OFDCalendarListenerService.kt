@@ -16,13 +16,19 @@
 package com.ofd.complications
 
 import android.util.Log
-import com.google.android.gms.wearable.MessageEvent
-import com.google.android.gms.wearable.Wearable
-import com.google.android.gms.wearable.WearableListenerService
+import com.google.android.gms.wearable.*
 
 class OFDCalendarListenerService : WearableListenerService() {
 
     private val TAG = this.javaClass.simpleName
+
+    override fun onCapabilityChanged(ci: CapabilityInfo) {
+        Log.d(TAG, "Capabilities changed: " + ci.nodes)
+        Wearable.getCapabilityClient(applicationContext)
+            .getCapability("wear", CapabilityClient.FILTER_REACHABLE).addOnCompleteListener {
+                if (it.result.nodes.size > 0) OFDCalendarSyncJob.register(applicationContext)
+            }
+    }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         Log.d(TAG, "!!!!!! Message Received: $messageEvent")

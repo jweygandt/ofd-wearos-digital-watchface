@@ -50,7 +50,7 @@ class D12 {
         const val timeC5GapP = 0f
 
         // c5 width
-        const val c5WidthP = .630f
+        const val c5WidthP = .700f
 
         // c6,c7 radius
         const val c6RadiusP = C1HeightP / 2f * 1.3f

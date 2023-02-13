@@ -19,8 +19,8 @@ So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
 
-2/12/2023 Added first revision of multi event calendar. Currently need to tap the date string on the
-watch face to refresh it. Exploring methods to detect calender changes
+2/12/2023 Added first revision of multi event calendar. Should sync to all available calendars via
+services and listeners on the phone.
 
 2/11/2023 The Phone app is now also a ListenerService so it is no longer necessary for it to be
 running for the play/pause to work.
@@ -67,7 +67,8 @@ They feature:
 # Complication Updates
 
 Since complications can go stale for various reasons, including initial startup, tapping the date
-string at the top of the watch will initiate a complication refresh.
+string at the top of the watch will initiate a complication refresh. The background briefly turns
+white on successful tap.
 
 # Goals:
 
@@ -80,7 +81,7 @@ string at the top of the watch will initiate a complication refresh.
   * 4 for icon only, generally tap-to-launch
     * app and contacts shortcuts
   * 1 large multi-line text, 4 lines
-    * calendar, using the OFDCalendar (still a work in progress)
+    * calendar, using the OFDCalendar
   * 2 range
     * Steps and AQI
   * 1 large full image background
@@ -164,9 +165,9 @@ You will need a res/values/api_kes.xml like this (in .gitignore):
 
 # Changes
 
-1/15/22 Did a big cleanup and refactor, even changed the application id. It looks better than the
+1/15/23 Did a big cleanup and refactor, even changed the application id. It looks better than the
 1/14 code, IT COMPILES, BUT HAS NOT BEEN TESTED, so likely will have some bugs.
 
-1/14/22 At the moment the code is really hacked - very much so!, and will be cleaned up considerably
+1/14/23 At the moment the code is really hacked - very much so!, and will be cleaned up considerably
 later, but I'm feeling a need to push the changes to the cloud.
 

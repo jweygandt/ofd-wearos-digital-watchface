@@ -30,6 +30,7 @@ import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
 import com.ofd.complications.OFDCalendar
+import com.ofd.complications.OFDCalendarSyncJob
 import com.ofd.complications.PlayPause
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicInteger
@@ -81,6 +82,7 @@ class PhoneActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch { OFDCalendar.setEventData(contentResolver, dataClient) }
+        lifecycleScope.launch { OFDCalendarSyncJob.register(applicationContext) }
     }
 
     override fun onResume() {
