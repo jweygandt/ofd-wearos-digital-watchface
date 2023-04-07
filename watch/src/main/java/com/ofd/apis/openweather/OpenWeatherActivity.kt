@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
@@ -48,7 +49,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.runBlocking
 
-
 class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
 
     @Composable
@@ -65,6 +65,18 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
 
         private val Calendar.date
             get() = get(Calendar.DAY_OF_MONTH)
+
+        private val Calendar.dayOfWeek
+            get() = when (get(Calendar.DAY_OF_WEEK)) {
+                Calendar.SUNDAY -> "SU"
+                Calendar.MONDAY -> "M"
+                Calendar.TUESDAY -> "TU"
+                Calendar.WEDNESDAY -> "W"
+                Calendar.THURSDAY -> "TH"
+                Calendar.FRIDAY -> "F"
+                Calendar.SATURDAY -> "SA"
+                else -> "??"
+            }
 
         val LineLeft: Shape = object : Shape {
             override fun createOutline(
@@ -135,7 +147,8 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
                     TimeText(
                         timeTextStyle = TimeTextDefaults.timeTextStyle()
                             .merge(TextStyle(color = textColor))
-                    ) }) {
+                    )
+                }) {
 
                 var W by remember { data }
 
@@ -271,17 +284,18 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
                                                     color = textColor
                                                 )
                                                 val pct = (w.pop * 100).toInt()
+                                                val rain = pct>20
                                                 Text(
                                                     (w.pop * 100).toInt().toString() + "%",
                                                     fontSize = if (pct == 100) 12.sp else 14.sp,
-                                                    color = textColor
+                                                    color = if(rain) Color.Red else textColor,
+                                                    fontWeight = if (rain) FontWeight.Bold else FontWeight.Normal
                                                 )
                                             }
                                             inx++
                                         } while (dataCol0Based(hour + 1) != 0)
                                         row++
                                     }
-
                                 }
                             }
                         }
@@ -342,17 +356,18 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
                                                     color = textColor
                                                 )
                                                 val pct = (w.pop * 100).toInt()
+                                                val rain = pct>20
                                                 Text(
                                                     (w.pop * 100).toInt().toString() + "%",
                                                     fontSize = if (pct == 100) 12.sp else 14.sp,
-                                                    color = textColor
+                                                    color = if(rain) Color.Red else textColor,
+                                                    fontWeight = if (rain) FontWeight.Bold else FontWeight.Normal
                                                 )
                                             }
                                             inx++
                                         } while (dataCol0Based(hour + 1) != 0)
                                         row++
                                     }
-
                                 }
                             }
                         }
@@ -369,46 +384,87 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
                                     cal.timeInMillis = d.date
                                     Row(
                                         horizontalArrangement = Arrangement.SpaceEvenly,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth().padding(0.dp,0.dp,0.dp,8.dp)
                                     ) {
-
+                                        val doItByRows = true
                                         do {
                                             val w = WW.dailys[inx]
                                             cal.timeInMillis = w.date
-                                            val date = cal.date
-                                            Column(
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                modifier = Modifier
-                                            ) {
-                                                Text(date.toString(), color = textColor)
-                                                Text(
-                                                    w.tempMax.toInt().toString() + "\u00b0",
-                                                    color = textColor
-                                                )
-                                                Text(
-                                                    w.tempMin.toInt().toString() + "\u00b0",
-                                                    color = textColor
-                                                )
-                                            }
-                                            Column(
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                modifier = Modifier
-                                            ) {
-                                                RenderBitmap(live, w.bitmap)
-                                                val pct = (w.pop * 100).toInt()
-                                                Text(
-                                                    (w.pop * 100).toInt().toString() + "%",
-                                                    fontSize = if (pct == 100) 12.sp else 14.sp,
-                                                    color = textColor
-                                                )
-                                            }
-                                            if (true || inx % rowsize != 0) {
+                                            val date = cal.dayOfWeek
+                                            if (doItByRows) {
                                                 Column(
-                                                    Modifier
-                                                        .width(2.dp)
-                                                        .background(Color.White)
-                                                        .fillMaxWidth()
-                                                ) {}
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    modifier = Modifier
+                                                ) {
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.SpaceEvenly,
+//                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Text(date.toString(), color = textColor)
+                                                        RenderBitmap(live, w.bitmap)
+                                                    }
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.SpaceEvenly,
+//                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Text(
+                                                            w.tempMax.toInt()
+                                                                .toString() + "\u00b0" +
+                                                                "-" + w.tempMin.toInt()
+                                                                .toString() + "\u00b0",
+                                                            color = textColor
+                                                        )
+                                                    }
+                                                    Row(
+                                                        horizontalArrangement =
+                                                        Arrangement.SpaceEvenly,
+//                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        val pct = (w.pop * 100).toInt()
+                                                        val rain = pct>20
+                                                        Text(
+                                                            (w.pop * 100).toInt().toString() + "%",
+                                                            fontSize = if (pct == 100) 12.sp else 14.sp,
+                                                            color = if(rain) Color.Red else textColor,
+                                                            fontWeight = if (rain) FontWeight.Bold else FontWeight.Normal
+                                                        )
+                                                    }
+                                                }
+                                            } else {
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    modifier = Modifier
+                                                ) {
+                                                    Text(date.toString(), color = textColor)
+                                                    Text(
+                                                        w.tempMax.toInt().toString() + "\u00b0",
+                                                        color = textColor
+                                                    )
+                                                    val pct = (w.pop * 100).toInt()
+                                                    Text(
+                                                        (w.pop * 100).toInt().toString() + "%",
+                                                        fontSize = if (pct == 100) 12.sp else 14.sp,
+                                                        color = textColor
+                                                    )
+                                                }
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    modifier = Modifier
+                                                ) {
+                                                    RenderBitmap(live, w.bitmap)
+                                                    Text(
+                                                        w.tempMin.toInt().toString() + "\u00b0",
+                                                        color = textColor
+                                                    )
+                                                }
+                                                if (true || inx % rowsize != 0) {
+                                                    Column(
+                                                        Modifier
+                                                            .width(2.dp)
+                                                            .background(Color.White)
+                                                            .fillMaxWidth()
+                                                    ) {}
+                                                }
                                             }
                                             inx++
                                         } while (inx % rowsize != 0 && inx < WW.dailys.size)
@@ -419,7 +475,6 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
                                             inx++
                                         }
                                     }
-
                                 }
                             }
                         }
@@ -445,7 +500,6 @@ class OpenWeatherActivity : APIActivity<WeatherResult>(OpenWeatherAPI) {
     }
 }
 
-
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 @Composable
 fun MainAppPreviewEvents() {
@@ -459,7 +513,6 @@ fun MainAppPreviewEvents() {
     val x = stringResource(id = R.string.openweather_appid)
     OpenWeatherActivity.doStaticContent(false, data)
 }
-
 
 //@Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 //@Composable

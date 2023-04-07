@@ -422,7 +422,7 @@ fun createComplicationSlotManager(
     Log.d(TAG, "Repo: " + currentUserStyleRepository.toString())
     Log.d(TAG, "Style: " + currentUserStyleRepository.userStyle.value.toMutableUserStyle().size)
 
-    val mgrh = ComplicationSlotManagerHolder(manager, slots.map { ComplicationWrapper(it) })
+    val mgrh = ComplicationSlotManagerHolder(manager, slots.map { ComplicationSlotWrapper(it) })
     manager.addTapListener(Listener(mgrh, currentUserStyleRepository))
     return mgrh
 }

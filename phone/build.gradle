@@ -71,4 +71,7 @@ dependencies {
     implementation libs.androidx.lifecycle.viewmodel.compose
     implementation libs.androidx.lifecycle.runtime.ktx
     implementation libs.playservices.wearable
+
+  implementation group: 'org.dmfs', name: 'lib-recur', version: '0.13.0'
+
 }

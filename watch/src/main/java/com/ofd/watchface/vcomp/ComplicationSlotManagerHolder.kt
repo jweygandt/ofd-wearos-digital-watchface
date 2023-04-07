@@ -1,7 +1,7 @@
 package com.ofd.watchface.vcomp
 
 import androidx.wear.watchface.ComplicationSlotsManager
-import com.ofd.complications.ComplicationWrapper
+import com.ofd.complications.ComplicationSlotWrapper
 
 /**
  * Don't is suck there are so many final classes? OK, maybe I'm thinking Java and not Kotlin, as
@@ -12,7 +12,7 @@ import com.ofd.complications.ComplicationWrapper
  */
 class ComplicationSlotManagerHolder(
     val slotManager: ComplicationSlotsManager,
-    val slotWrappers: List<ComplicationWrapper>
+    val slotWrappers: List<ComplicationSlotWrapper>
 ) {
     lateinit var watch: VirtualComplicationWatchRenderSupport
 }

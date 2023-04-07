@@ -79,7 +79,7 @@ class CalendarListenerService : WearableListenerService() {
                         timestr + " " + title
                     )
                 }
-                Log.d(TAG, "Events: " + r.joinToString("\n", "    "))
+                Log.d(TAG, "Events1: " + r.joinToString("\n", "    "))
                 events.set(r)
             } catch (e: Exception) {
                 events.set(listOf(e.message ?: "ERROR"))

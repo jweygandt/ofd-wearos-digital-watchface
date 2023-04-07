@@ -4,10 +4,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Icon
 import android.util.Log
 import androidx.wear.watchface.ComplicationSlot
-import androidx.wear.watchface.complications.data.LongTextComplicationData
-import androidx.wear.watchface.complications.data.RangedValueComplicationData
-import androidx.wear.watchface.complications.data.ShortTextComplicationData
-import androidx.wear.watchface.complications.data.SmallImageComplicationData
+import androidx.wear.watchface.complications.data.*
 import java.time.Instant
 
 /**
@@ -67,6 +64,8 @@ open class StandardComplication(
             if((instant!!.epochSecond*1000L) > expiresms)
                 return "??"
             val txt = fulltext
+            if(type == ComplicationType.LONG_TEXT)
+                return txt
             val inx = txt.indexOf("?")
             return if (inx < 0) txt else txt.substring(0, inx)
         }

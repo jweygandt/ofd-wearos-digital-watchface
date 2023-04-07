@@ -40,7 +40,7 @@ import java.time.Instant
 class PurpleAirAQI : SuspendingComplicationDataSourceService() {
 
     companion object {
-        private const val TAG = "AirQuality"
+        private const val TAG = "PurpleAirAQI"
 
         val airQualitySearch = AirQualitySearch()
     }
@@ -136,7 +136,7 @@ class PurpleAirAQI : SuspendingComplicationDataSourceService() {
                     min = mn,
                     max = mx,
                     contentDescription = PlainComplicationText.Builder(
-                        aqi.rangeText + "?Color:" + color
+                        aqi.rangeText + "?Color=" + color
                     ).build()
                 ).setMonochromaticImage(image).setTapAction(tapAction()).build()
             }

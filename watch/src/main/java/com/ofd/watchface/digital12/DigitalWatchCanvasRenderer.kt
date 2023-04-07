@@ -27,7 +27,7 @@ import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.WatchFaceLayer
 import com.google.android.gms.wearable.Wearable
-import com.ofd.complications.ComplicationWrapper
+import com.ofd.complications.ComplicationSlotWrapper
 import com.ofd.complications.Complications
 import com.ofd.complications.VirtualComplicationPlayPauseImpl
 import com.ofd.watchface.location.WatchLocationService
@@ -221,7 +221,7 @@ class DigitalWatchCanvasRenderer(
     }
 
     private fun drawArc(
-        complicationWrapper: ComplicationWrapper, zonedDateTime: ZonedDateTime, canvas: Canvas
+        complicationWrapper: ComplicationSlotWrapper, zonedDateTime: ZonedDateTime, canvas: Canvas
     ) {
         val complication = complicationWrapper.virtualComplication(
             this, zonedDateTime.toInstant()
@@ -298,7 +298,7 @@ class DigitalWatchCanvasRenderer(
     }
 
     private fun drawIcon(
-        complicationWrapper: ComplicationWrapper, canvas: Canvas
+        complicationWrapper: ComplicationSlotWrapper, canvas: Canvas
     ) {
         val complication = complicationWrapper.virtualComplication(
             this, null
@@ -333,7 +333,7 @@ class DigitalWatchCanvasRenderer(
     }
 
     private fun drawLongText(
-        complicationWrapper: ComplicationWrapper, zonedDateTime: ZonedDateTime, canvas: Canvas
+        complicationWrapper: ComplicationSlotWrapper, zonedDateTime: ZonedDateTime, canvas: Canvas
     ) {
         //                    Log.d(TAG, "Complication 5: " + complication.javaClass)
         //                    Log.d(TAG, "\t" + complication.complicationData.javaClass)
@@ -373,11 +373,13 @@ class DigitalWatchCanvasRenderer(
                     s = s.substring(l)
                 }
             } else {
+//                Log.d(TAG, "Text: " + text)
                 for (t in text.split("\n")) {
+//                    Log.d(TAG, "Drawing line: " + t)
                     textPaint.getTextBounds("XXXXX", 0, 5, textBounds)
                     var height = textBounds.bottom - textBounds.top
                     bottom += height
-                    //                            Log.d(TAG, "Line: " + bottom + ":" + textBounds + ":" + bounds +":"+t)
+//                    Log.d(TAG, "Line: " + bottom + ":" + textBounds + ":" + bounds + ":" + t)
                     canvas.drawText(
                         t, bounds.left.toFloat(), bottom.toFloat(), textPaint
                     )
@@ -397,7 +399,7 @@ class DigitalWatchCanvasRenderer(
     }
 
     private fun drawSmallTextAndIcon(
-        complicationWrapper: ComplicationWrapper, canvas: Canvas, zonedDateTime: ZonedDateTime
+        complicationWrapper: ComplicationSlotWrapper, canvas: Canvas, zonedDateTime: ZonedDateTime
     ) {
         val bounds = complicationWrapper.computeBounds(Rect(0, 0, canvas.width, canvas.height))
 

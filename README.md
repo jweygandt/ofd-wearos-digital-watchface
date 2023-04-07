@@ -18,6 +18,8 @@ images.
 So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
+4/7/2023 Fixed a bug in long text display (complication 5) so a "?" will not break display. The "?"
+is used for parameters in other complications. Updated weather activity for better comprehension.
 
 2/12/2023 Added first revision of multi event calendar. Should sync to all available calendars via
 services and listeners on the phone.

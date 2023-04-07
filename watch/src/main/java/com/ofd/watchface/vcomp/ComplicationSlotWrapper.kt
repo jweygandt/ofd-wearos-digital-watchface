@@ -21,7 +21,7 @@ import java.time.ZonedDateTime
  * So as we create slots we need to wrap ComplicationSlot with this wrapper to extend
  * its functionality.
  */
-class ComplicationWrapper(private val slot: ComplicationSlot) {
+class ComplicationSlotWrapper(private val slot: ComplicationSlot) {
 
     fun virtualComplication(
         watch: VirtualComplicationWatchRenderSupport, instant: Instant?

@@ -133,7 +133,7 @@ class PhoneActivity : ComponentActivity() {
         Log.d(TAG, "doIt()")
         OFDCalendar.getCalendars(contentResolver)
         OFDCalendar.getEvents(contentResolver)
-        OFDCalendar.setEventData(contentResolver, dataClient)
+//        OFDCalendar.setEventData(contentResolver, dataClient)
     }
 
     companion object {

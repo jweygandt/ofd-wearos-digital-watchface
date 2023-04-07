@@ -8,7 +8,11 @@ import com.google.android.gms.wearable.PutDataRequest
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.*
+import java.util.concurrent.TimeUnit
+import org.dmfs.rfc5545.DateTime
+import org.dmfs.rfc5545.recur.RecurrenceRule
 
 object OFDCalendar {
     val TAG = this.javaClass.simpleName
@@ -63,51 +67,63 @@ object OFDCalendar {
     }
 
     private val sdf = SimpleDateFormat("EEE hh:mm aa ZZZ", Locale.US)
-
-    fun getEvents(contentResolver: ContentResolver) {
-        // Run query
-//        calendarItemAdapter.clearData()
-        val selection =
-            "((${CalendarContract.Events.DTEND} > ?) AND (" + "${CalendarContract.Events.DTEND} < ?))"
-        val selectionArgs: Array<String> = arrayOf(
-            System.currentTimeMillis().toString(),
-            (System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000).toString()
-        )
-//        val selection = ""
-//        val selectionArgs = emptyArray<String>()
-        val cur = contentResolver.query(
-            CalendarContract.Events.CONTENT_URI,
-            arrayOf(
-                CalendarContract.Events.DTSTART,
-                CalendarContract.Events.DTEND,
-                CalendarContract.Events.TITLE,
-                CalendarContract.Events.DESCRIPTION
-            ),
-            selection, selectionArgs,
-            CalendarContract.Events.DTSTART,
-        )
-        Log.d(TAG, "Events: $cur")
-        Log.d(TAG, "CURs: ${cur?.count}")
-        while (cur?.moveToNext() == true) {
-            val dtstart = sdf.format(cur.getLong(0))
-            val dtend = sdf.format(cur.getLong(1))
-            val title = cur.getString(2)
-            val description = cur.getString(3)
-            Log.d(
-                TAG, "event: $dtstart\t$dtend\t($title)\t($description)"
-            )
-        }
-        cur?.close()
-    }
+    private val xsdf = SimpleDateFormat("MM/dd/yyy hh:mm aa ZZZ", Locale.US)
+    private val localtz = TimeZone.getDefault()
+    private val offset = localtz.rawOffset.toLong()
 
     data class EVENT(
         var dtstart: Long,
         var dtend: Long,
+        var durationStr: String,
         val title: String,
         val allday: Int,
         val eventtz: String,
         val eventendtz: String,
+        val rrule: String?,
     ) : Comparable<EVENT> {
+
+        var error = false
+        var valid = true
+
+        init {
+            try {
+                // All day events are in GMT, translate to local TZ
+                if (allday == 1) {
+                    if ("UTC".equals(eventtz)) {
+                        dtstart -= offset
+                        dtend -= offset
+                    }
+                }
+
+                val durationMs = if (durationStr != null && durationStr.length > 0) {
+                    if (durationStr.endsWith("S")) durationStr = durationStr.replace("P", "PT")
+                    Duration.parse(durationStr).toMillis()
+                } else -1
+
+                if (rrule != null && rrule.length > 0) {
+                    var start = DateTime(dtstart)
+                    val rule = RecurrenceRule(rrule)
+                    val r = rule.iterator(start)
+                    r.fastForward(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30))
+
+                    if (r.hasNext()) {
+                        dtstart = r.nextDateTime().timestamp
+                        dtend += durationMs
+//                        Log.d(
+//                            OFDCalendar.TAG,
+//                            "Next: " + xsdf.format(nextTime.timestamp) + ", duration: " + durationMs / 1000
+//                        )
+                    } else {
+                        valid = false
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(OFDCalendar.TAG, "bad rule: $rrule, ${e.message}", e)
+                error = true
+                valid = false
+            }
+        }
+
         override fun compareTo(other: EVENT): Int {
             val st = dtstart - other.dtstart
             if (st > 0) return 1 else if (st < 0) return -1
@@ -117,9 +133,78 @@ object OFDCalendar {
         }
     }
 
+    fun getEvents(contentResolver: ContentResolver) {
+        // Run query
+//        val whereClause =
+//            "((${CalendarContract.Events.DTEND} > ?) AND (" + "${CalendarContract.Events.DTEND} < ?))"
+//        val whereArgs: Array<String> = arrayOf(
+//            System.currentTimeMillis().toString(),
+//            (System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000).toString()
+//        )
+
+//        val whereClause =
+//            "${CalendarContract.Events.DTEND} = 0 AND ${CalendarContract.Events.RRULE} IS NOT NULL"
+//        val whereArgs: Array<String> = arrayOf(
+//        )
+
+        val whereClause =
+            "${CalendarContract.Events.DTEND} = 0 OR ${CalendarContract.Events.RRULE} IS NOT NULL OR ${CalendarContract.Events.RDATE} IS NOT NULL OR ${CalendarContract.Events.EXRULE} IS NOT NULL OR ${CalendarContract.Events.EXDATE} IS NOT NULL"
+        val whereArgs: Array<String> = arrayOf(
+        )
+
+//        val whereClause =
+//            "${CalendarContract.Events.RRULE} IS NOT NULL"
+//        val whereArgs: Array<String> = arrayOf(
+//        )
+
+//        val whereClause = ""
+//        val whereArgs = emptyArray<String>()
+
+        val cur = contentResolver.query(
+            CalendarContract.Events.CONTENT_URI,
+            arrayOf(
+                CalendarContract.Events.DTSTART,
+                CalendarContract.Events.DTEND,
+                CalendarContract.Events.DURATION,
+                CalendarContract.Events.TITLE,
+                CalendarContract.Events.ALL_DAY,
+                CalendarContract.Events.EVENT_TIMEZONE,
+                CalendarContract.Events.EVENT_END_TIMEZONE,
+                CalendarContract.Events.RRULE,
+                CalendarContract.Events.RDATE,
+                CalendarContract.Events.EXRULE,
+                CalendarContract.Events.EXDATE,
+            ),
+            whereClause, whereArgs,
+            CalendarContract.Events.DTSTART,
+        )
+        Log.d(TAG, "Events: $cur")
+        Log.d(TAG, "CURs: ${cur?.count}")
+        while (cur?.moveToNext() == true) {
+            var inx = 0;
+            val dtstart = cur.getLong(inx++)
+            val dtend = cur.getLong(inx++) //xsdf.format(cur.getLong(1))
+            val duration = cur.getString(inx++) ?: ""
+            val title = cur.getString(inx++) ?: ""
+            val allday = cur.getInt(inx++)
+            val eventtz = cur.getString(inx++) ?: ""
+            val eventendtz = cur.getString(inx++) ?: eventtz
+            val rrule = cur.getString(inx++) ?: ""
+            val rdate = cur.getString(inx++) ?: ""
+            val exrule = cur.getString(inx++) ?: ""
+            val exdate = cur.getString(inx++) ?: ""
+            Log.d(
+                TAG,
+                "event1: ${xsdf.format(dtstart)}\t$dtend\t$allday\t($duration)\t($title)\t($rrule)\t($rdate)\t($exrule)\t($exdate)"
+            )
+            EVENT(dtstart, dtend, duration, title, allday, eventtz, eventendtz, rrule)
+        }
+        cur?.close()
+    }
+
     fun setEventData(contentResolver: ContentResolver, dataClient: DataClient) {
         val selection =
-            "((${CalendarContract.Events.DTSTART} >= ?) AND (" + "${CalendarContract.Events.DTSTART} < ?)) OR " + "((${CalendarContract.Events.DTSTART} < ?) AND (" + "${CalendarContract.Events.DTEND} >= ?))"
+            "((${CalendarContract.Events.DTSTART} >= ?) AND (" + "${CalendarContract.Events.DTSTART} < ?)) OR " + "((${CalendarContract.Events.DTSTART} < ?) AND (" + "${CalendarContract.Events.DTEND} >= ?))" + "OR (${CalendarContract.Events.DTEND} = 0 OR ${CalendarContract.Events.RRULE} IS NOT NULL OR ${CalendarContract.Events.RDATE} IS NOT NULL OR ${CalendarContract.Events.EXRULE} IS NOT NULL OR ${CalendarContract.Events.EXDATE} IS NOT NULL)"
         val now = System.currentTimeMillis()
         val nowstr = now.toString()
         val weekstr = (now + 7 * 24 * 60 * 60 * 1000).toString()
@@ -131,45 +216,68 @@ object OFDCalendar {
             arrayOf(
                 CalendarContract.Events.DTSTART,
                 CalendarContract.Events.DTEND,
+                CalendarContract.Events.DURATION,
                 CalendarContract.Events.TITLE,
                 CalendarContract.Events.ALL_DAY,
                 CalendarContract.Events.EVENT_TIMEZONE,
-                CalendarContract.Events.EVENT_END_TIMEZONE
+                CalendarContract.Events.EVENT_END_TIMEZONE,
+                CalendarContract.Events.RRULE,
+                CalendarContract.Events.RDATE,
+                CalendarContract.Events.EXRULE,
+                CalendarContract.Events.EXDATE,
             ),
             selection, selectionArgs,
             CalendarContract.Events.DTSTART,
         ).use { cur ->
             Log.d(TAG, "CURs: ${cur?.count}")
             val sdf = SimpleDateFormat("EEE hh:mm aa ZZZ", Locale.US)
-            val localtz = TimeZone.getDefault()
-            val offset = localtz.rawOffset.toLong()
             val baos = ByteArrayOutputStream()
             val sorted = sortedSetOf<EVENT>()
             ObjectOutputStream(baos).use { oos ->
                 oos.writeLong(System.currentTimeMillis())
+                var error = false
                 while (cur?.moveToNext() == true) {
-                    var dtstart = cur.getLong(0)
-                    var dtend = cur.getLong(1)
-                    val title = cur.getString(2)
-                    val allday = cur.getInt(3)
-                    val eventtz = cur.getString(4)
-                    val eventendtz = cur.getString(5) ?: eventtz
+                    var inx = 0;
+                    val dtstart = cur.getLong(inx++)
+                    val dtend = cur.getLong(inx++) //xsdf.format(cur.getLong(1))
+                    val duration = cur.getString(inx++) ?: ""
+                    val title = cur.getString(inx++) ?: ""
+                    val allday = cur.getInt(inx++)
+                    val eventtz = cur.getString(inx++) ?: ""
+                    val eventendtz = cur.getString(inx++) ?: eventtz
+                    val rrule = cur.getString(inx++) ?: ""
+                    val rdate = cur.getString(inx++) ?: ""
+                    val exrule = cur.getString(inx++) ?: ""
+                    val exdate = cur.getString(inx++) ?: ""
 
-                    if (allday == 1) {
-                        if ("UTC".equals(eventtz)) {
-                            dtstart -= offset
-                            dtend -= offset
-                        }
+                    if (rdate.length > 0 || exrule.length > 0 || exdate.length > 0) {
+                        error = true;
+                        Log.e(
+                            TAG,
+                            "error event: ${xsdf.format(dtstart)}\t$dtend\t$allday\t($duration)\t($title)\t($rrule)\t($rdate)\t($exrule)\t($exdate)"
+                        )
+                    } else {
+                        val event = EVENT(
+                            dtstart, dtend, duration, title, allday, eventtz, eventendtz, rrule
+                        )
+                        if (event.error) error = true
+                        else if (event.valid) sorted.add(event)
                     }
-
-                    sorted.add(EVENT(dtstart, dtend, title, allday, eventtz, eventendtz))
                 }
 
+                var cnt = 0
                 sorted.forEach {
+                    cnt++
                     Log.d(
                         TAG,
-                        "event: ${sdf.format(it.dtstart)}\t${sdf.format(it.dtend)}\t${it.allday}\t${it.eventtz}\t${it.eventendtz}\t(${it.title})"
+                        "event2: ${sdf.format(it.dtstart)}\t${sdf.format(it.dtend)}\t${it.allday}\t${it.eventtz}\t${it.eventendtz}\t(${it.title})"
                     )
+                    if (error && cnt == 4) {
+                        oos.writeLong(it.dtstart)
+                        oos.writeLong(it.dtend)
+                        oos.writeObject("Errors see phone logs")
+                        oos.writeInt(1)
+                    }
                     oos.writeLong(it.dtstart)
                     oos.writeLong(it.dtend)
                     oos.writeObject(it.title)
@@ -184,3 +292,4 @@ object OFDCalendar {
         }
     }
 }
+
