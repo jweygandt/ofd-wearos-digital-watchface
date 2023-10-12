@@ -12,7 +12,7 @@ import com.ofd.complications.ComplicationSlotWrapper
  */
 class ComplicationSlotManagerHolder(
     val slotManager: ComplicationSlotsManager,
-    val slotWrappers: List<ComplicationSlotWrapper>
+    val slotWrappers: LinkedHashMap<Int, ComplicationSlotWrapper>
 ) {
     lateinit var watch: VirtualComplicationWatchRenderSupport
 }

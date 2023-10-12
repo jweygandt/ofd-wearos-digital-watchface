@@ -40,7 +40,6 @@ import kotlinx.coroutines.launch
 
 private const val DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID = R.drawable.complication_red_style
 
-
 // bottom of first complication
 private val o1 = .5f + .5f * Math.sin(Math.acos((D12.c1WidthP + .5f * D12.C12GapP) / .5))
     .toFloat() - D12.c1WatchGapExtraP
@@ -104,6 +103,7 @@ internal const val COMPLICATION_8 = 108
 internal const val COMPLICATION_9 = 109
 internal const val COMPLICATION_10 = 110
 internal const val COMPLICATION_11 = 111
+internal const val COMPLICATION_11a = 211
 internal const val COMPLICATION_12 = 112
 internal const val COMPLICATION_14 = 114
 
@@ -128,7 +128,6 @@ val FULLIMAGE_COMP = listOf(
 val OVERLAY_COMP = listOf(
     ComplicationType.SMALL_IMAGE,
 )
-
 
 /**
  * Represents the unique id associated with a complication and the complication types it supports.
@@ -183,6 +182,10 @@ sealed class ComplicationConfig(val id: Int, val supportedTypes: List<Complicati
         COMPLICATION_11, ARC_COMPS
     )
 
+    object C11a : ComplicationConfig(
+        COMPLICATION_11a, BOX_COMPS
+    )
+
     object C12 : ComplicationConfig(
         COMPLICATION_12, FULLIMAGE_COMP
     )
@@ -190,7 +193,6 @@ sealed class ComplicationConfig(val id: Int, val supportedTypes: List<Complicati
     object C14 : ComplicationConfig(
         COMPLICATION_14, OVERLAY_COMP
     )
-
 }
 
 // Utility function that initializes default complication slots (left and right).
@@ -274,7 +276,6 @@ fun createComplicationSlotManager(
         )
     ).build()
 
-
     val c3 = ComplicationSlot.createRoundRectComplicationSlotBuilder(
         id = ComplicationConfig.C3.id,
         canvasComplicationFactory = defaultCanvasComplicationFactory,
@@ -286,7 +287,6 @@ fun createComplicationSlotManager(
             )
         )
     ).build()
-
 
     val c4 = ComplicationSlot.createRoundRectComplicationSlotBuilder(
         id = ComplicationConfig.C4.id,
@@ -372,7 +372,6 @@ fun createComplicationSlotManager(
         )
     ).build()
 
-
     val c10 = ComplicationSlot.createEdgeComplicationSlotBuilder(
         id = ComplicationConfig.C10.id,
         canvasComplicationFactory = defaultCanvasComplicationFactory,
@@ -413,8 +412,20 @@ fun createComplicationSlotManager(
         )
     ).build()
 
+    val c11a = ComplicationSlot.createRoundRectComplicationSlotBuilder(
+        id = ComplicationConfig.C11a.id,
+        canvasComplicationFactory = defaultCanvasComplicationFactory,
+        supportedTypes = ComplicationConfig.C11a.supportedTypes,
+        defaultDataSourcePolicy = DEFAULT_SHORT_TEXT,
+        bounds = ComplicationSlotBounds(
+            RectF(
+                c2lp, c2tp, c2rp, c2bp
+            )
+        )
+    ).build()
+
     // c7 is the toggle for c14, the main interceptor
-    val slots = listOf(c12, c7, c14, c1, c2, c3, c4, c5, c6, c8, c9, c10, c11)
+    val slots = listOf(c12, c7, c14, c1, c2, c3, c4, c5, c6, c8, c9, c10, c11, c11a)
     val manager = ComplicationSlotsManager(
         slots, currentUserStyleRepository
     )
@@ -422,7 +433,10 @@ fun createComplicationSlotManager(
     Log.d(TAG, "Repo: " + currentUserStyleRepository.toString())
     Log.d(TAG, "Style: " + currentUserStyleRepository.userStyle.value.toMutableUserStyle().size)
 
-    val mgrh = ComplicationSlotManagerHolder(manager, slots.map { ComplicationSlotWrapper(it) })
+    val mgrh = ComplicationSlotManagerHolder(
+        manager,
+        slots.map { ComplicationSlotWrapper(it) }
+            .associateByTo(LinkedHashMap<Int, ComplicationSlotWrapper>(), {c -> c.id}))
     manager.addTapListener(Listener(mgrh, currentUserStyleRepository))
     return mgrh
 }
@@ -433,14 +447,14 @@ class Listener(
 ) : ComplicationSlotsManager.TapCallback {
     override fun onComplicationSlotTapped(complicationSlotId: Int) {
         Log.d("ComplicationUtils", "onTap: " + complicationSlotId)//, Throwable("traceback"))
-        val cw = mgrh.slotWrappers.find { cw -> cw.id == complicationSlotId }
+        val cw = mgrh.slotWrappers.get(complicationSlotId)
         if (complicationSlotId == COMPLICATION_14) {
             mgrh.watch.scope.launch {
                 VirtualComplicationPlayPauseImpl.toggleMusic(mgrh.watch)
             }
         } else if (cw != null) {
             val cb =
-                cw.virtualComplication(mgrh.watch,null).onTap
+                cw.virtualComplication(mgrh.watch, null).onTap
             if (cb != null) cb.run()
         }
     }

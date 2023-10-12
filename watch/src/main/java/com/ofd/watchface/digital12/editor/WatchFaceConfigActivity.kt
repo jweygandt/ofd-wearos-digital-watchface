@@ -22,6 +22,8 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.ofd.watch.databinding.ActivityWatchFaceConfigBinding
 import com.ofd.ditital.alpha.editor.WatchFaceConfigStateHolder
+import com.ofd.watchface.digital12.COMPLICATION_11
+import com.ofd.watchface.digital12.COMPLICATION_11a
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -126,6 +128,11 @@ class WatchFaceConfigActivity : ComponentActivity() {
     fun onClick111(view: View) {
         Log.d(TAG, "onClickRightComplicationButton() $view")
         stateHolder.setComplication(111)
+    }
+
+    fun onClick111a(view: View) {
+        Log.d(TAG, "onClickRightComplicationButton() $view")
+        stateHolder.setComplication(COMPLICATION_11a)
     }
 
     fun onClick112(view: View) {

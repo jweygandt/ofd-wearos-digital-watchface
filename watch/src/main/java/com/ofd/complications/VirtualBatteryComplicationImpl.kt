@@ -21,6 +21,12 @@ class VirtualBatteryComplicationImpl(
 ) : StandardComplication(slot, watch, instant) {
     override val image: Icon? get() = null
 
+    override val text: String
+        get() {
+            val t = super.text
+            return if (t.endsWith("%")) t.substring(0, t.length - 1) else t
+        }
+
     override fun customDrawable(
         canvas: Canvas, bleft: Float, btop: Float, bbottom: Float, sqsize: Float
     ): Boolean {

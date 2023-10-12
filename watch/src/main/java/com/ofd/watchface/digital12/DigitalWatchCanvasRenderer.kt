@@ -15,11 +15,18 @@
  */
 package com.ofd.watchface.digital12
 
+import android.Manifest.permission.WAKE_LOCK
 import android.content.ContentResolver
 import android.content.Context
 import android.graphics.*
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.os.PowerManager
 import android.util.Log
 import android.view.SurfaceHolder
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.graphics.toRectF
 import androidx.wear.watchface.*
 import androidx.wear.watchface.complications.data.ComplicationType
@@ -81,6 +88,7 @@ class DigitalWatchCanvasRenderer(
     //    val dataClient by lazy { Wearable.getDataClient(context) }
     override val messageClient by lazy { Wearable.getMessageClient(context) }
     override val capabilityClient by lazy { Wearable.getCapabilityClient(context) }
+    val ambientLightLevel = mutableStateOf(45.0f)
 
     init {
         val renderer = this
@@ -97,6 +105,28 @@ class DigitalWatchCanvasRenderer(
                 )
             }
         }
+
+        val mSensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val mLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        mSensorManager.registerListener(
+            object : SensorEventListener {
+                override fun onSensorChanged(event: SensorEvent?) {
+                    if (event != null) {
+//                        Log.d(TAG, "Light: " + event.values.contentToString())
+                        ambientLightLevel.value = event.values[0]
+                    }
+                }
+
+                override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+                }
+            },
+            mLight,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+
+//        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+//        val wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "MyWakeLockTag")
+//        wakeLock.acquire()
     }
 
     override fun onTapEvent(
@@ -145,12 +175,27 @@ class DigitalWatchCanvasRenderer(
             canvas.drawColor(hl.backgroundTint)
         }
 
-        for (complication in complicationSlotManagerHolder.slotWrappers) {
+        for (complication in complicationSlotManagerHolder.slotWrappers.values) {
             if (complication.enabled) {
                 complication.renderHighlightLayer(canvas, zonedDateTime, renderParameters)
             }
         }
     }
+
+    var doSysSettingsOnce = true;
+    var regularBrightness = 25
+    val ambientBrightness = 2
+
+    val nightLevel = 5f
+    val ambientNight = Paint().apply() { color = -0x30FFFFFF }
+    val activeNight = Paint().apply() { color = -0x60FFFFFF }
+
+    val midLevel = 60f
+    val ambientMid = Paint().apply() { color = 0x70000000 }
+    val activeMid = Paint().apply() { color = 0x30000000 }
+
+    val ambientDay = Paint().apply() { color = 0x60000000 }
+    val activeDay = Paint().apply() { color = 0x0000000 }
 
     override fun render(
         canvas: Canvas,
@@ -158,7 +203,55 @@ class DigitalWatchCanvasRenderer(
         zonedDateTime: ZonedDateTime,
         sharedAssets: DigitalSharedAssets
     ) {
+
 //        Log.d(TAG, "render()")
+
+//        val contentResolver = context.getContentResolver()
+//        try {
+//            val setting = Settings.System.SCREEN_BRIGHTNESS
+//            val value = Settings.System.getInt(contentResolver, setting, 128)
+//            Log.d(TAG, "Brightness: " + value)
+//
+//            var newBrightness =
+//                if (value == ambientBrightness) {
+//                    if (renderParameters.drawMode != DrawMode.AMBIENT) {
+//                        regularBrightness
+//                    } else {
+//                        ambientBrightness
+//                    }
+//                } else {
+//                    if (renderParameters.drawMode != DrawMode.AMBIENT) {
+//                        regularBrightness = value
+//                        value
+//                    } else {
+//                        ambientBrightness
+//                    }
+//                }
+//
+//            newBrightness = 1
+//
+//            if (renderParameters.drawMode == DrawMode.AMBIENT && value != newBrightness) {
+//                val bi = Settings.System.canWrite(context)
+//                if (bi) {
+//                    Log.d(TAG, "IT HAS PERMISIONS, new value: $newBrightness")
+//                    Settings.System.putInt(contentResolver, setting, newBrightness)
+//                } else {
+//                    if (doSysSettingsOnce) {
+//                        doSysSettingsOnce = false
+//                        val intent = Intent(
+//                            Settings.ACTION_MANAGE_WRITE_SETTINGS,
+//                            Uri.parse("package:" + context.packageName)
+//                        )
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//                        Log.d(TAG, "obtaining")
+//                        context.startActivity(intent)
+//                    }
+//                }
+//            }
+//        } catch (e: Exception) {
+//            Log.w("MainActivity", "Failed to read display brightness setting")
+//            e.printStackTrace()
+//        }
 
         WatchLocationService.doOnRender(
             scope, context, renderParameters, complicationSlotManagerHolder
@@ -170,6 +263,10 @@ class DigitalWatchCanvasRenderer(
             0xFF000040.toInt()
         }
 
+        if (renderParameters.drawMode == DrawMode.AMBIENT) {
+//            WindowManager.LayoutParams().screenBrightness = .01f
+        }
+
         canvas.drawColor(backgroundColor)
 
         // CanvasComplicationDrawable already obeys rendererParameters.
@@ -177,6 +274,23 @@ class DigitalWatchCanvasRenderer(
 
         if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS_OVERLAY)) {
             drawTime(canvas, bounds, zonedDateTime)
+
+            val overlayPaint = when {
+                renderParameters.drawMode == DrawMode.AMBIENT ->
+                    when {
+                        ambientLightLevel.value <= nightLevel -> ambientNight
+                        ambientLightLevel.value <= midLevel -> ambientMid
+                        else -> ambientDay
+                    }
+                else ->
+                    when {
+                        ambientLightLevel.value <= nightLevel -> activeNight
+                        ambientLightLevel.value <= midLevel -> activeMid
+                        else -> activeDay
+                    }
+            }
+            if (overlayPaint.color != 0)
+                canvas.drawRect(canvas.clipBounds, overlayPaint)
         }
 
 //        if (renderParameters.drawMode == DrawMode.INTERACTIVE && renderParameters.watchFaceLayers.contains(
@@ -189,7 +303,7 @@ class DigitalWatchCanvasRenderer(
 
     // ----- All drawing functions -----
     private fun drawComplications(canvas: Canvas, zonedDateTime: ZonedDateTime) {
-        for (complication in complicationSlotManagerHolder.slotWrappers) {
+        for (complication in complicationSlotManagerHolder.slotWrappers.values) {
 //            Log.d(TAG,"Complication: " + complication.id +":"+complication.enabled)
             if (complication.enabled) {
 //                Log.d(
@@ -203,9 +317,27 @@ class DigitalWatchCanvasRenderer(
                 } else if (((complication.id in COMPLICATION_6..COMPLICATION_9) || complication.id == COMPLICATION_12) && renderParameters.drawMode == DrawMode.INTERACTIVE) {
                     drawIcon(complication, canvas)
                 } else if (complication.id in COMPLICATION_10..COMPLICATION_11) {
-                    drawArc(complication, zonedDateTime, canvas)
+                    drawArc(complication, -1f, "", zonedDateTime, canvas)
                 } else if (COMPLICATION_14 == complication.id) {
                     // ignore all rendering
+                } else if (COMPLICATION_11a == complication.id) {
+                    var c = complication.virtualComplication(this, zonedDateTime.toInstant())
+//                    Log.d(TAG, "C11a: " + c.type);
+                    if (c.type == ComplicationType.SHORT_TEXT) {
+                        try {
+                            val v = c.text.toFloat()
+                            val t = c.text + "steps" // OK, big hack
+//                            Log.d(TAG, "C11a: " + v);
+                            drawArc(
+                                complicationSlotManagerHolder.slotWrappers.get(COMPLICATION_11)!!,
+                                v, t,
+                                zonedDateTime,
+                                canvas
+                            )
+                        } catch (e: Exception) {
+                            // ignore
+                        }
+                    }
                 } else if (renderParameters.drawMode == DrawMode.INTERACTIVE) {
                     Log.d(
                         TAG, "something else: bounds: + " + complication.computeBounds(
@@ -221,7 +353,11 @@ class DigitalWatchCanvasRenderer(
     }
 
     private fun drawArc(
-        complicationWrapper: ComplicationSlotWrapper, zonedDateTime: ZonedDateTime, canvas: Canvas
+        complicationWrapper: ComplicationSlotWrapper,
+        overrrideVal: Float,
+        overrideText: String,
+        zonedDateTime: ZonedDateTime,
+        canvas: Canvas
     ) {
         val complication = complicationWrapper.virtualComplication(
             this, zonedDateTime.toInstant()
@@ -232,6 +368,7 @@ class DigitalWatchCanvasRenderer(
 //            Log.d(TAG, "Range Value text: " + getText(d.text, zonedDateTime))
 //            Log.d(TAG, "Range Value title: " + getText(d.title, zonedDateTime))
 //            Log.d(TAG, "Range Value description: " + getText(d.contentDescription, zonedDateTime))
+//            Log.d(TAG, "Range Value: " + complicationWrapper.id + ":" + complication.rangeValue)
             val cbounds =
                 complicationWrapper.computeBounds(Rect(0, 0, canvas.width, canvas.height)).toRectF()
             val arcBackgroundPaint = getCompPaint(complicationWrapper.id)
@@ -257,9 +394,17 @@ class DigitalWatchCanvasRenderer(
                 cbounds.right - 1f * off,
                 cbounds.bottom - 1f * off
             )
+
+            // I have observed that the steps complication will stop doing updates of the range value
+            // when it exceeds the goal, so 11a will hold the SHORT_TEXT version of the range
+            // complication so that one can get the real value from there, hence the big hack!
+            val rangeValue =
+                if (overrrideVal > 0) overrrideVal else complication.rangeValue
+//            Log.d(TAG, "Override: " + complicationWrapper.id + ":" + overrrideVal + " " +  rangeValue)
+
             val valueSweepAngle = D12.sweepAngle * min(
                 1f,
-                (complication.rangeValue - complication.rangeMin) / (complication.rangeMax - complication.rangeMin)
+                (rangeValue - complication.rangeMin) / (complication.rangeMax - complication.rangeMin)
             )
 
             val (backgroundStart, backgroundSweep) = if (complicationWrapper.id == COMPLICATION_10) {
@@ -288,7 +433,7 @@ class DigitalWatchCanvasRenderer(
             val textPath = Path()
 //            Log.d(TAG, "Path: " + bounds + ":" + textStart + ":" + textSweep)
             textPath.addArc(bounds, textStart, textSweep)
-            var t = complication.text
+            var t = if (overrrideVal > 0) overrideText else complication.text
             val ix = t.indexOf("?")
             if (ix > 0) t = t.substring(0, ix)
             canvas.drawTextOnPath(

@@ -1,6 +1,5 @@
 package com.ofd.watchface.vcomp
 
-import android.graphics.Canvas
 import android.graphics.drawable.Icon
 import android.util.Log
 import androidx.wear.watchface.ComplicationSlot
@@ -16,6 +15,16 @@ open class StandardComplication(
     private val watch: VirtualComplicationWatchRenderSupport,
     private val instant: Instant?
 ) : VirtualComplication {
+
+    init {
+        when (slot.complicationData.value) {
+            is RangedValueComplicationData -> if (slot.id == -111) Log.d(
+                TAG,
+                "New data: " + slot.id + ":" + slot.complicationData.value
+            )
+            else -> {}
+        }
+    }
 
     override val type get() = slot.complicationData.value.type
 
@@ -61,10 +70,10 @@ open class StandardComplication(
     override val text: String
         get() {
             val exms = expiresms
-            if((instant!!.epochSecond*1000L) > expiresms)
+            if ((instant!!.epochSecond * 1000L) > expiresms)
                 return "??"
             val txt = fulltext
-            if(type == ComplicationType.LONG_TEXT)
+            if (type == ComplicationType.LONG_TEXT)
                 return txt
             val inx = txt.indexOf("?")
             return if (inx < 0) txt else txt.substring(0, inx)
@@ -129,13 +138,13 @@ open class StandardComplication(
             val v = (if (i2 < 0) qry else qry.substring(0, i2))
             try {
                 return ICON_BACKGROUND.valueOf(v)
-            }catch(e:Exception){
+            } catch (e: Exception) {
                 Log.e(TAG, "Bad value for IconBackground=" + v)
                 return ICON_BACKGROUND.NONE
             }
         }
 
     companion object {
-        val TAG = "VirtualComplication"
+        val TAG = "StandardComplication"
     }
 }

@@ -32,7 +32,6 @@ class SunriseSunset : SuspendingComplicationDataSourceService() {
 
     companion object {
         private const val TAG = "SunriseSunset"
-        val sdf = SimpleDateFormat("h:mm")
     }
 
 
@@ -76,6 +75,7 @@ class SunriseSunset : SuspendingComplicationDataSourceService() {
                 (nh == rh && nm < rm) ||
                 (nh == sh && nm > sm)
             Log.d(TAG, "${rise}:${nh}:${rh}:${sh}")
+            val sdf = SimpleDateFormat("h:mm")
             time = sdf.format(if (rise) sunrise.time.time else sunset.time.time)
             image = MonochromaticImage.Builder(
                 Icon.createWithResource(

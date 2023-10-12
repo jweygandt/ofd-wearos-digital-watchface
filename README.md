@@ -18,6 +18,14 @@ images.
 So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
+9/14/2023 For some reason adaptive brightness was not very agressive at dimming at night. In fact
+ambient brightness seems to be the same as non-ambient. So accessing the light sensor and drawing
+a black transparent overlay I can achieve dimming. I did try to find brightness controls but that
+did not work out, the overlay is a simple hack.
+
+9/14/2023 Moved HonestHeartRate from a seperate project to this project. Turns out something
+(perhaps the agressive power managment) was causing failures.
+
 4/7/2023 Fixed a bug in long text display (complication 5) so a "?" will not break display. The "?"
 is used for parameters in other complications. Updated weather activity for better comprehension.
 

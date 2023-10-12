@@ -88,17 +88,19 @@ object OFDCalendar {
         init {
             try {
                 // All day events are in GMT, translate to local TZ
+                val durationMs = if (durationStr != null && durationStr.length > 0) {
+                    if (durationStr.endsWith("S")) durationStr = durationStr.replace("P", "PT")
+                    Duration.parse(durationStr).toMillis()
+                } else 0
+
+//                Log.d(TAG, "duration: " + durationStr + ", " + durationMs)
+
                 if (allday == 1) {
                     if ("UTC".equals(eventtz)) {
                         dtstart -= offset
                         dtend -= offset
                     }
                 }
-
-                val durationMs = if (durationStr != null && durationStr.length > 0) {
-                    if (durationStr.endsWith("S")) durationStr = durationStr.replace("P", "PT")
-                    Duration.parse(durationStr).toMillis()
-                } else -1
 
                 if (rrule != null && rrule.length > 0) {
                     var start = DateTime(dtstart)
@@ -108,6 +110,8 @@ object OFDCalendar {
 
                     if (r.hasNext()) {
                         dtstart = r.nextDateTime().timestamp
+                        if (dtend <= 0)
+                            dtend += dtstart
                         dtend += durationMs
 //                        Log.d(
 //                            OFDCalendar.TAG,
@@ -116,7 +120,12 @@ object OFDCalendar {
                     } else {
                         valid = false
                     }
+                } else if (dtend <= 0) {
+                    dtend += dtstart + durationMs
                 }
+
+                // Limit duration to a single day
+                dtend = Math.min(dtend, dtstart + 24L * 3600000L)
             } catch (e: Exception) {
                 Log.e(OFDCalendar.TAG, "bad rule: $rrule, ${e.message}", e)
                 error = true
@@ -148,7 +157,9 @@ object OFDCalendar {
 //        )
 
         val whereClause =
-            "${CalendarContract.Events.DTEND} = 0 OR ${CalendarContract.Events.RRULE} IS NOT NULL OR ${CalendarContract.Events.RDATE} IS NOT NULL OR ${CalendarContract.Events.EXRULE} IS NOT NULL OR ${CalendarContract.Events.EXDATE} IS NOT NULL"
+            "${CalendarContract.Events.DTEND} = 0 OR ${CalendarContract.Events.RRULE} IS NOT NULL" +
+                " OR ${CalendarContract.Events.RDATE} IS NOT NULL OR ${CalendarContract.Events.EXRULE} IS NOT NULL" +
+                " OR ${CalendarContract.Events.EXDATE} IS NOT NULL"
         val whereArgs: Array<String> = arrayOf(
         )
 
@@ -204,7 +215,11 @@ object OFDCalendar {
 
     fun setEventData(contentResolver: ContentResolver, dataClient: DataClient) {
         val selection =
-            "((${CalendarContract.Events.DTSTART} >= ?) AND (" + "${CalendarContract.Events.DTSTART} < ?)) OR " + "((${CalendarContract.Events.DTSTART} < ?) AND (" + "${CalendarContract.Events.DTEND} >= ?))" + "OR (${CalendarContract.Events.DTEND} = 0 OR ${CalendarContract.Events.RRULE} IS NOT NULL OR ${CalendarContract.Events.RDATE} IS NOT NULL OR ${CalendarContract.Events.EXRULE} IS NOT NULL OR ${CalendarContract.Events.EXDATE} IS NOT NULL)"
+            "((${CalendarContract.Events.DTSTART} >= ?) AND (${CalendarContract.Events.DTSTART} < ?)) OR " +
+                "((${CalendarContract.Events.DTSTART} < ?) AND (" + "${CalendarContract.Events.DTEND} >= ?))" +
+                "OR (${CalendarContract.Events.DTEND} = 0 OR ${CalendarContract.Events.RRULE} IS NOT NULL " +
+                "OR ${CalendarContract.Events.RDATE} IS NOT NULL OR ${CalendarContract.Events.EXRULE} IS NOT NULL " +
+                "OR ${CalendarContract.Events.EXDATE} IS NOT NULL)"
         val now = System.currentTimeMillis()
         val nowstr = now.toString()
         val weekstr = (now + 7 * 24 * 60 * 60 * 1000).toString()
@@ -230,7 +245,7 @@ object OFDCalendar {
             CalendarContract.Events.DTSTART,
         ).use { cur ->
             Log.d(TAG, "CURs: ${cur?.count}")
-            val sdf = SimpleDateFormat("EEE hh:mm aa ZZZ", Locale.US)
+            val sdf = SimpleDateFormat("MM/dd/yy EEE hh:mm aa ZZZ", Locale.US)
             val baos = ByteArrayOutputStream()
             val sorted = sortedSetOf<EVENT>()
             ObjectOutputStream(baos).use { oos ->
@@ -249,6 +264,11 @@ object OFDCalendar {
                     val rdate = cur.getString(inx++) ?: ""
                     val exrule = cur.getString(inx++) ?: ""
                     val exdate = cur.getString(inx++) ?: ""
+
+//                    Log.d(
+//                        TAG,
+//                        "event: ${xsdf.format(dtstart)}\t$dtend\t$allday\t($duration)\t($title)\t($rrule)\t($rdate)\t($exrule)\t($exdate)"
+//                    )
 
                     if (rdate.length > 0 || exrule.length > 0 || exdate.length > 0) {
                         error = true;
