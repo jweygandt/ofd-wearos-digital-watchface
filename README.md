@@ -18,7 +18,8 @@ images.
 So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
-5/17/2024 Updated SunsetSunrise complication with an app screen to display more sol
+5/17/2024 Updated SunsetSunrise complication with an app screen to display more solar
+and lunar statistics.
 Undid most of the brightness overlay, turns out it was agressively dim at times, not
 sure if it was buggy or not, simply giving a try to a simpler version.
 
