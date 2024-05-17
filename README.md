@@ -18,6 +18,10 @@ images.
 So with that in mind, I'm breaking some rules and hacking away...
 
 # Recent Changes
+5/17/2024 Updated SunsetSunrise complication with an app screen to display more sol
+Undid most of the brightness overlay, turns out it was agressively dim at times, not
+sure if it was buggy or not, simply giving a try to a simpler version.
+
 9/14/2023 For some reason adaptive brightness was not very agressive at dimming at night. In fact
 ambient brightness seems to be the same as non-ambient. So accessing the light sensor and drawing
 a black transparent overlay I can achieve dimming. I did try to find brightness controls but that

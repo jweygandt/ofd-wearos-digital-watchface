@@ -15,11 +15,16 @@
  */
 package com.ofd.complications
 
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.graphics.drawable.Icon
 import android.util.Log
 import androidx.wear.watchface.complications.data.*
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
+import com.ofd.apis.purpleair.PurpleAirActivity2
+import com.ofd.apis.sunrisesunset.SunriseSunsetActivity
 import com.ofd.watchface.location.WatchLocationService
 import com.ofd.sunrisesunset.SunriseSunsetCalculator
 import com.ofd.sunrisesunset.dto.SSLocation
@@ -98,7 +103,7 @@ class SunriseSunset : SuspendingComplicationDataSourceService() {
                     text = time
                 ).build(),
                 contentDescription = PlainComplicationText.Builder(text = "SunriseSunset").build(),
-            ).setMonochromaticImage(image)
+            ).setMonochromaticImage(image).setTapAction(tapAction())
                 .build()
 
             else -> {
@@ -112,5 +117,13 @@ class SunriseSunset : SuspendingComplicationDataSourceService() {
         Log.d(TAG, "Deactivated")
     }
 
+    fun Context.tapAction(): PendingIntent? {
+        val intent = Intent(
+            this, SunriseSunsetActivity::class.java
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return PendingIntent.getActivity(
+            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
 
 }

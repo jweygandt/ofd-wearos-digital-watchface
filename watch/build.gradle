@@ -130,5 +130,6 @@ dependencies {
   implementation 'androidx.health:health-services-client:1.0.0-beta01'
   implementation 'com.google.guava:guava:30.1.1-android'
 
+  implementation 'org.shredzone.commons:commons-suncalc:3.10'
 //  implementation 'io.coil-kt:coil:2.2.2'
 }

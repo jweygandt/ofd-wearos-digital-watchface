@@ -198,6 +198,16 @@
                 android:value="600" />
         </service>
 
+        <activity
+            android:name="com.ofd.apis.sunrisesunset.SunriseSunsetActivity"
+            android:icon="@drawable/ic_sunrise"
+            android:label="SunriseSunsetActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name="com.ofd.complications.HonestHeartRate2"
             android:exported="true"
